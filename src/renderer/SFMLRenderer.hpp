@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/ColorRGB.hpp"
 #include "../common/Common.hpp"
 #include "Renderer.hpp"
 #include <string>
@@ -13,9 +14,10 @@ public:
 
   void SwapBuffers(void) override;
 
-  void DrawCircle(const Vector2 &pos, float radius) override;
-  void DrawRectangle(const Vector2 &halfExtents, const Vector2 &pos) override;
-  void DrawLine(const Vector2 &start, const Vector2 &end) override;
+  void DrawCircle(const Vector2 &pos, float radius, const ColorRGB &c) override;
+  void DrawRectangle(const Vector2 &halfExtents, const Vector2 &pos, const ColorRGB &c) override;
+  void DrawLine(const std::pair<Vector2, ColorRGB> &start,
+                const std::pair<Vector2, ColorRGB> &end) override;
 
 private:
   struct SFMLRendererImpl;

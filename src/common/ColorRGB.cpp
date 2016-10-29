@@ -3,6 +3,11 @@
 #include <cassert>
 #include <ostream>
 
+ColorRGB ColorRGB::White(void) { return ColorRGB(1.0f, 1.0f, 1.0f); }
+ColorRGB ColorRGB::Red(void) { return ColorRGB(1.0f, 0.0f, 0.0f); }
+ColorRGB ColorRGB::Green(void) { return ColorRGB(0.0f, 1.0f, 0.0f); }
+ColorRGB ColorRGB::Blue(void) { return ColorRGB(0.0f, 0.0f, 1.0f); }
+
 ColorRGB::ColorRGB() : r(0.0f), g(0.0f), b(0.0f) {}
 
 ColorRGB::ColorRGB(float r, float g, float b) : r(r), g(g), b(b) {

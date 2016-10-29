@@ -9,8 +9,18 @@ struct TrackSpec {
   float radius;
   float trackWidth;
 
+  int numLinePoints;
   int numMods;
   float maxModStrength;
+
+  TrackSpec(float radius, float trackWidth, int numLinePoints, int numMods, float maxModStrength)
+      : radius(radius), trackWidth(trackWidth), numLinePoints(numLinePoints), numMods(numMods),
+        maxModStrength(maxModStrength) {
+
+    assert(radius > 0.0f);
+    assert(trackWidth > 0.0f);
+    assert(numLinePoints >= 3);
+  }
 };
 
 class Track {
