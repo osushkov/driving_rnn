@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cassert>
+#include <new>
 #include <utility>
 
 static_assert(sizeof(char) == 1, "char isnt 1 byte");
