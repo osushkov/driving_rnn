@@ -17,7 +17,9 @@ class CollisionLineSegment {
 public:
   Vector2 start;
   Vector2 end;
-  CollisionSphere boundingSphere;
+
+  Vector2 midPoint;
+  float length;
 
   CollisionLineSegment();
   CollisionLineSegment(const Vector2 &start, const Vector2 &end);

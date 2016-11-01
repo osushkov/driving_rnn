@@ -12,18 +12,6 @@
 namespace simulation {
 
 class Car {
-  float size;
-  float eyeSeparation;
-
-  Vector2 pos;
-  Vector2 velocity;
-
-  Vector2 forward;
-  Vector2 left; // useful for computing eye positions.
-
-  float turnRate;
-  float accelRate;
-
 public:
   Car(float size, float eyeSeparation, Vector2 startPos, Vector2 startOrientation);
 
@@ -36,7 +24,7 @@ public:
   pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track);
 
 private:
-  Vector2 leftEyePosition(void);
-  Vector2 rightEyePosition(void);
+  struct CarImpl;
+  uptr<CarImpl> impl;
 };
 }

@@ -17,8 +17,7 @@ CollisionLineSegment::CollisionLineSegment()
     : CollisionLineSegment(Vector2(0.0f, 0.0f), Vector2(0.0f, 0.0f)) {}
 
 CollisionLineSegment::CollisionLineSegment(const Vector2 &start, const Vector2 &end)
-    : start(start), end(end),
-      boundingSphere((start + end) / 2.0f, start.distanceTo(end) / 2.0f + Geometry::EPSILON) {}
+    : start(start), end(end), midPoint((start + end) * 0.5f), length(start.distanceTo(end)) {}
 
 bool CollisionLineSegment::CheckIntersectsSphere(const CollisionSphere &sphere) const {
   return Geometry::PointSegmentDist(sphere.centre, start, end).second < sphere.radius;
@@ -58,5 +57,6 @@ CollisionLineSegment::IntersectLineSegment(const CollisionLineSegment &otherLine
 void CollisionLineSegment::Set(const Vector2 &start, const Vector2 &end) {
   this->start = start;
   this->end = end;
-  this->boundingSphere.Set((start + end) / 2.0f, start.distanceTo(end) / 2.0f + Geometry::EPSILON);
+  this->midPoint = (start + end) * 0.5f;
+  this->length = start.distanceTo(end);
 }

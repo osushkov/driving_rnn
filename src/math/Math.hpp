@@ -22,6 +22,8 @@ static inline MatrixView GetMatrixView(EMatrix &m) {
   return result;
 }
 
+static inline float Deg2Rad(float degs) { return degs * static_cast<float>(M_PI) / 180.0f; }
+
 // Returns a uniformly distributed random number between 0 and 1.
 static inline float UnitRand(void) { return rand() / (float)RAND_MAX; }
 

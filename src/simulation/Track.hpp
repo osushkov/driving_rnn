@@ -1,7 +1,10 @@
 #pragma once
 
 #include "../common/Common.hpp"
+#include "../common/Maybe.hpp"
 #include "../renderer/Renderer.hpp"
+#include "../math/CollisionResult.hpp"
+#include <utility>
 
 namespace simulation {
 
@@ -29,6 +32,11 @@ public:
   ~Track();
 
   void Render(renderer::Renderer *renderer);
+
+  float DistanceAlongTrack(const Vector2 &point);
+  Maybe<ColorRGB> ColorAlongRay(const Vector2 &start, const Vector2 &dir);
+
+  vector<CollisionResult> IntersectSphere(const Vector2 &pos, float radius);
 
 private:
   struct TrackImpl;
