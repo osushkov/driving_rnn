@@ -30,7 +30,7 @@ struct Car::CarImpl {
   }
 
   void Render(renderer::Renderer *renderer) {
-    renderer->DrawCircle(pos, size/2.0f, CAR_CIRCLE_COLOR);
+    renderer->DrawCircle(pos, size / 2.0f, CAR_CIRCLE_COLOR);
 
     float arrowRadius = 0.8f * size / 2.0f;
     float arrowAngle = math::Deg2Rad(140.0f);
@@ -64,8 +64,6 @@ struct Car::CarImpl {
   Vector2 rightEyePosition(void) { return pos - left * (size / 4.0f); }
 };
 
-
-
 Car::Car(float size, float eyeSeparation, Vector2 startPos, Vector2 startOrientation)
     : impl(new CarImpl(size, eyeSeparation, startPos, startOrientation)) {}
 
@@ -75,10 +73,6 @@ void Car::SetAcceleration(float amount) { impl->SetAcceleration(amount); }
 
 void Car::SetTurnRate(float amount) { impl->SetTurnRate(amount); }
 
-void Car::Update(float seconds) {
-  impl->Update(seconds);
-}
+void Car::Update(float seconds) { impl->Update(seconds); }
 
-pair<vector<ColorRGB>, vector<ColorRGB>> Car::EyeView(Track *track) {
-  return impl->EyeView(track);
-}
+pair<vector<ColorRGB>, vector<ColorRGB>> Car::EyeView(Track *track) { return impl->EyeView(track); }

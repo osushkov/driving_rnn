@@ -18,8 +18,8 @@ struct WallSegment {
   ColorRGB startColor;
   ColorRGB endColor;
 
-  WallSegment(CollisionLineSegment line, Vector2 normal, ColorRGB startColor, ColorRGB endColor) :
-    line(line), normal(normal), startColor(startColor), endColor(endColor) {}
+  WallSegment(CollisionLineSegment line, Vector2 normal, ColorRGB startColor, ColorRGB endColor)
+      : line(line), normal(normal), startColor(startColor), endColor(endColor) {}
 };
 
 struct Track::TrackImpl {
@@ -28,19 +28,33 @@ struct Track::TrackImpl {
   float trackTotalLength;
   float trackMaxSize;
 
+  Vector2 startPos;
+  Vector2 startOrientation;
+
   TrackImpl(const TrackSpec &spec) {
     generateTrackLine(spec);
     generateWalls(spec);
+
+    startPos = trackLine[0];
+    if (rand() % 2 == 0) {
+      startOrientation = (trackLine[1] - startPos).normalised();
+    } else {
+      startOrientation = (trackLine.back() - startPos).normalised();
+    }
   }
 
-  void Render(renderer::Renderer *renderer) {
+  void Render(renderer::Renderer *renderer) const {
     for (const auto &wall : walls) {
       renderer->DrawLine(make_pair(wall.line.start, wall.endColor),
                          make_pair(wall.line.end, wall.startColor));
     }
   }
 
-  float DistanceAlongTrack(const Vector2 &point) {
+  pair<Vector2, Vector2> StartPosAndOrientation(void) const {
+    return make_pair(startPos, startOrientation);
+  }
+
+  float DistanceAlongTrack(const Vector2 &point) const {
     float minDistance = 0.0f;
     float bestResult = 0.0f;
 
@@ -63,7 +77,7 @@ struct Track::TrackImpl {
     return bestResult;
   }
 
-  Maybe<ColorRGB> ColorAlongRay(const Vector2 &start, const Vector2 &dir) {
+  Maybe<ColorRGB> ColorAlongRay(const Vector2 &start, const Vector2 &dir) const {
     CollisionLineSegment line(start, start + dir * trackMaxSize);
 
     // TODO: if it makes sense we can have a quad-tree or some kind of spatial partitioning
@@ -88,21 +102,28 @@ struct Track::TrackImpl {
       float f = distToStart / walls[wallIndex].line.length;
       f = std::max(0.0f, std::min(1.0f, f)); // clip to range 0 - 1
 
-      return Maybe<ColorRGB>(walls[wallIndex].endColor * f + walls[wallIndex].startColor * (1.0f - f));
+      return Maybe<ColorRGB>(walls[wallIndex].endColor * f +
+                             walls[wallIndex].startColor * (1.0f - f));
     } else {
       return Maybe<ColorRGB>::none;
     }
   }
 
-  vector<CollisionResult> IntersectSphere(const Vector2 &pos, float radius) {
+  vector<CollisionResult> IntersectSphere(const Vector2 &pos, float radius) const {
     CollisionSphere sphere(pos, radius);
 
     vector<CollisionResult> result;
-    for (const auto& wall : walls) {
-      // if (wall.line.midPoint.distanceTo2(pos) >
-      //     (radius + wall.line.length / 2.0f) * (radius + wall.line.length / 2.0f)) {
-      //   continue;
-      // }
+    for (const auto &wall : walls) {
+      if (wall.line.midPoint.distanceTo2(pos) >
+          (radius + wall.line.length / 2.0f) * (radius + wall.line.length / 2.0f)) {
+        continue;
+      }
+
+      CollisionResult cr = sphere.IntersectLineSegment(wall.line);
+      if (cr.haveCollision) {
+        cr.collisionNormal = wall.normal;
+        result.push_back(cr);
+      }
     }
     return result;
   }
@@ -126,7 +147,7 @@ struct Track::TrackImpl {
     return true;
   }
 
-  vector<float> genPertubation(const TrackSpec &spec) {
+  vector<float> genPertubation(const TrackSpec &spec) const {
     vector<float> perturbAmounts(spec.numLinePoints, 0.0f);
 
     for (int scale = 0; scale < 6; scale++) {
@@ -144,7 +165,7 @@ struct Track::TrackImpl {
     return perturbAmounts;
   }
 
-  void smooth(vector<float> &target, int neighbourhood, int passes) {
+  void smooth(vector<float> &target, int neighbourhood, int passes) const {
     for (int p = 0; p < passes; p++) {
       for (unsigned i = 0; i < target.size(); i++) {
         float sum = 0.0f;
@@ -193,21 +214,19 @@ struct Track::TrackImpl {
       Vector2 toNextLeft = (leftWallVerts[nextIndex] - leftWallVerts[i]).normalised();
       Vector2 toNextRight = (rightWallVerts[nextIndex] - rightWallVerts[i]).normalised();
 
-      walls.emplace_back(
-        CollisionLineSegment(leftWallVerts[i], leftWallVerts[nextIndex]),
-        toNextLeft.rotated(-static_cast<float>(M_PI) / 2.0f),
-        ColorRGB::Blue(), ColorRGB::Green());
-      walls.emplace_back(
-        CollisionLineSegment(rightWallVerts[i], rightWallVerts[nextIndex]),
-        toNextRight.rotated(static_cast<float>(M_PI) / 2.0f),
-        ColorRGB::White(), ColorRGB::Red());
+      walls.emplace_back(CollisionLineSegment(leftWallVerts[i], leftWallVerts[nextIndex]),
+                         toNextLeft.rotated(-static_cast<float>(M_PI) / 2.0f), ColorRGB::Blue(),
+                         ColorRGB::Green());
+      walls.emplace_back(CollisionLineSegment(rightWallVerts[i], rightWallVerts[nextIndex]),
+                         toNextRight.rotated(static_cast<float>(M_PI) / 2.0f), ColorRGB::White(),
+                         ColorRGB::Red());
     }
 
     trackMaxSize = sqrtf((maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY));
     return true;
   }
 
-  Vector2 offsetDirection(int trackIndex) {
+  Vector2 offsetDirection(int trackIndex) const {
     int nextIndex = (trackIndex + 1) % trackLine.size();
     int prevIndex = (trackIndex + trackLine.size() - 1) % trackLine.size();
 
@@ -224,16 +243,20 @@ Track::Track(const TrackSpec &spec) : impl(new TrackImpl(spec)) {}
 
 Track::~Track() = default;
 
-void Track::Render(renderer::Renderer *renderer) { impl->Render(renderer); }
+void Track::Render(renderer::Renderer *renderer) const { impl->Render(renderer); }
 
-float Track::DistanceAlongTrack(const Vector2 &point) {
+pair<Vector2, Vector2> Track::StartPosAndOrientation(void) const {
+  return impl->StartPosAndOrientation();
+}
+
+float Track::DistanceAlongTrack(const Vector2 &point) const {
   return impl->DistanceAlongTrack(point);
 }
 
-Maybe<ColorRGB> Track::ColorAlongRay(const Vector2 &start, const Vector2 &dir) {
+Maybe<ColorRGB> Track::ColorAlongRay(const Vector2 &start, const Vector2 &dir) const {
   return impl->ColorAlongRay(start, dir);
 }
 
-vector<CollisionResult> Track::IntersectSphere(const Vector2 &pos, float radius) {
+vector<CollisionResult> Track::IntersectSphere(const Vector2 &pos, float radius) const {
   return impl->IntersectSphere(pos, radius);
 }

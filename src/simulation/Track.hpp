@@ -2,8 +2,8 @@
 
 #include "../common/Common.hpp"
 #include "../common/Maybe.hpp"
-#include "../renderer/Renderer.hpp"
 #include "../math/CollisionResult.hpp"
+#include "../renderer/Renderer.hpp"
 #include <utility>
 
 namespace simulation {
@@ -31,12 +31,14 @@ public:
   Track(const TrackSpec &spec);
   ~Track();
 
-  void Render(renderer::Renderer *renderer);
+  void Render(renderer::Renderer *renderer) const;
 
-  float DistanceAlongTrack(const Vector2 &point);
-  Maybe<ColorRGB> ColorAlongRay(const Vector2 &start, const Vector2 &dir);
+  pair<Vector2, Vector2> StartPosAndOrientation(void) const;
 
-  vector<CollisionResult> IntersectSphere(const Vector2 &pos, float radius);
+  float DistanceAlongTrack(const Vector2 &point) const;
+  Maybe<ColorRGB> ColorAlongRay(const Vector2 &start, const Vector2 &dir) const;
+
+  vector<CollisionResult> IntersectSphere(const Vector2 &pos, float radius) const;
 
 private:
   struct TrackImpl;
