@@ -11,15 +11,24 @@
 
 namespace simulation {
 
+struct CarDef {
+  float size;
+  float eyeSeparation;
+
+  float turnRate;
+  float accelRate;
+};
+
 class Car {
 public:
-  Car(float size, float eyeSeparation, Vector2 startPos, Vector2 startOrientation);
+  Car(const CarDef &def, Vector2 startPos, Vector2 startOrientation);
+  ~Car();
 
-  void Render(renderer::Renderer *renderer);
+  void Render(renderer::Renderer *renderer) const;
 
   void SetAcceleration(float amount);
-  void SetTurnRate(float amount);
-  void Update(float seconds);
+  void SetTurn(float amount);
+  void Update(float seconds, Track *track);
 
   pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track);
 

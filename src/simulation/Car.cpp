@@ -11,8 +11,7 @@ static const ColorRGB CAR_ARROW_COLOR = ColorRGB::White();
 static constexpr float CAR_VELOCITY_DECAY = 0.75f; // per second
 
 struct Car::CarImpl {
-  float size;
-  float eyeSeparation;
+  CarDef def;
 
   Vector2 pos;
   Vector2 velocity;
@@ -20,19 +19,19 @@ struct Car::CarImpl {
   Vector2 forward;
   Vector2 left; // useful for computing eye positions.
 
-  float turnRate;
-  float accelRate;
+  float turnFrac;
+  float accelFrac;
 
-  CarImpl(float size, float eyeSeparation, Vector2 startPos, Vector2 startOrientation)
-      : size(size), eyeSeparation(eyeSeparation), pos(startPos), velocity(0.0f, 0.0f),
-        forward(startOrientation), turnRate(0.0f), accelRate(0.0f) {
+  CarImpl(const CarDef &def, Vector2 startPos, Vector2 startOrientation)
+      : def(def), pos(startPos), velocity(0.0f, 0.0f),
+        forward(startOrientation), turnFrac(0.0f), accelFrac(0.0f) {
     left = forward.rotated(static_cast<float>(M_PI) / 2.0f);
   }
 
-  void Render(renderer::Renderer *renderer) {
-    renderer->DrawCircle(pos, size / 2.0f, CAR_CIRCLE_COLOR);
+  void Render(renderer::Renderer *renderer) const {
+    renderer->DrawCircle(pos, def.size / 2.0f, CAR_CIRCLE_COLOR);
 
-    float arrowRadius = 0.8f * size / 2.0f;
+    float arrowRadius = 0.8f * def.size / 2.0f;
     float arrowAngle = math::Deg2Rad(140.0f);
     Vector2 fPoint = pos + forward * arrowRadius;
     Vector2 lPoint = pos + forward.rotated(arrowAngle) * arrowRadius;
@@ -42,15 +41,15 @@ struct Car::CarImpl {
     renderer->DrawLine(make_pair(fPoint, CAR_ARROW_COLOR), make_pair(rPoint, CAR_ARROW_COLOR));
   }
 
-  void SetAcceleration(float amount) { accelRate = amount; }
+  void SetAcceleration(float amount) { accelFrac = amount; }
 
-  void SetTurnRate(float amount) { turnRate = amount; }
+  void SetTurn(float amount) { turnFrac = amount; }
 
-  void Update(float seconds) {
-    forward.rotate(turnRate * seconds);
+  void Update(float seconds, Track *track) {
+    forward.rotate(seconds * turnFrac * def.turnRate);
     left = forward.rotated(static_cast<float>(M_PI) / 2.0f);
 
-    velocity += forward * (seconds * accelRate);
+    velocity += forward * (seconds * accelFrac * def.accelRate);
     velocity *= powf(CAR_VELOCITY_DECAY, seconds);
 
     pos += velocity * seconds;
@@ -60,19 +59,21 @@ struct Car::CarImpl {
     return make_pair(vector<ColorRGB>(), vector<ColorRGB>());
   }
 
-  Vector2 leftEyePosition(void) { return pos + left * (size / 4.0f); }
-  Vector2 rightEyePosition(void) { return pos - left * (size / 4.0f); }
+  Vector2 leftEyePosition(void) { return pos + left * (def.eyeSeparation / 2.0f); }
+  Vector2 rightEyePosition(void) { return pos - left * (def.eyeSeparation / 2.0f); }
 };
 
-Car::Car(float size, float eyeSeparation, Vector2 startPos, Vector2 startOrientation)
-    : impl(new CarImpl(size, eyeSeparation, startPos, startOrientation)) {}
+Car::Car(const CarDef &def, Vector2 startPos, Vector2 startOrientation)
+    : impl(new CarImpl(def, startPos, startOrientation)) {}
 
-void Car::Render(renderer::Renderer *renderer) { impl->Render(renderer); }
+Car::~Car() = default;
+
+void Car::Render(renderer::Renderer *renderer) const { impl->Render(renderer); }
 
 void Car::SetAcceleration(float amount) { impl->SetAcceleration(amount); }
 
-void Car::SetTurnRate(float amount) { impl->SetTurnRate(amount); }
+void Car::SetTurn(float amount) { impl->SetTurn(amount); }
 
-void Car::Update(float seconds) { impl->Update(seconds); }
+void Car::Update(float seconds, Track *track) { impl->Update(seconds, track); }
 
 pair<vector<ColorRGB>, vector<ColorRGB>> Car::EyeView(Track *track) { return impl->EyeView(track); }
