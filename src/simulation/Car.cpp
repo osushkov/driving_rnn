@@ -1,15 +1,22 @@
 
 #include "Car.hpp"
-#include "../math/Math.hpp"
 #include "../math/Geometry.hpp"
+#include "../math/Math.hpp"
 #include <cmath>
 
 using namespace simulation;
 
 static const ColorRGB CAR_CIRCLE_COLOR = ColorRGB(1.0f, 0.5f, 0.5f);
 static const ColorRGB CAR_ARROW_COLOR = ColorRGB::White();
+static const ColorRGB CAR_ACCEL_COLOR = ColorRGB::Red();
+static const ColorRGB CAR_TURN_COLOR = ColorRGB::Green();
 
-static constexpr float CAR_VELOCITY_DECAY = 0.75f; // per second
+static constexpr float CAR_VELOCITY_DECAY = 0.9f; // per second
+static constexpr float CAR_VELOCITY_COLLISION_DECAY = 0.3f;
+
+static constexpr float EYE_FOV = 90.0f * static_cast<float>(M_PI) / 180.0f;
+static constexpr unsigned PIXELS_PER_EYE = 15;
+static constexpr unsigned SAMPLER_PER_PIXEL = 5;
 
 struct Car::CarImpl {
   CarDef def;
@@ -24,8 +31,8 @@ struct Car::CarImpl {
   float accelFrac;
 
   CarImpl(const CarDef &def, Vector2 startPos, Vector2 startOrientation)
-      : def(def), pos(startPos), velocity(0.0f, 0.0f),
-        forward(startOrientation), turnFrac(0.0f), accelFrac(0.0f) {
+      : def(def), pos(startPos), velocity(0.0f, 0.0f), forward(startOrientation), turnFrac(0.0f),
+        accelFrac(0.0f) {
     left = forward.rotated(static_cast<float>(M_PI) / 2.0f);
   }
 
@@ -40,6 +47,20 @@ struct Car::CarImpl {
 
     renderer->DrawLine(make_pair(fPoint, CAR_ARROW_COLOR), make_pair(lPoint, CAR_ARROW_COLOR));
     renderer->DrawLine(make_pair(fPoint, CAR_ARROW_COLOR), make_pair(rPoint, CAR_ARROW_COLOR));
+
+    // Draw the acceleration indicator.
+    float sign = accelFrac > 0.0f ? 1.0f : -1.0f;
+    Vector2 accelIndicatorStart = pos + forward * (sign * def.size / 2.0f);
+    Vector2 accelIndicatorEnd = accelIndicatorStart + forward * (accelFrac * def.size * 0.7f);
+    renderer->DrawLine(make_pair(accelIndicatorStart, CAR_ACCEL_COLOR),
+                       make_pair(accelIndicatorEnd, CAR_ACCEL_COLOR));
+
+    // Draw the turn indicator.
+    sign = turnFrac > 0.0f ? 1.0f : -1.0f;
+    Vector2 turnIndicatorStart = pos + left * (sign * def.size / 2.0f);
+    Vector2 turnIndicatorEnd = turnIndicatorStart + left * (turnFrac * def.size * 0.7f);
+    renderer->DrawLine(make_pair(turnIndicatorStart, CAR_TURN_COLOR),
+                       make_pair(turnIndicatorEnd, CAR_TURN_COLOR));
   }
 
   void SetAcceleration(float amount) { accelFrac = amount; }
@@ -55,10 +76,10 @@ struct Car::CarImpl {
 
     pos += velocity * seconds;
 
-    checkCollisions(track);
+    checkCollisions(seconds, track);
   }
 
-  void checkCollisions(Track *track) {
+  void checkCollisions(float seconds, Track *track) {
     Vector2 netDisplacement;
     bool haveCollision = false;
 
@@ -82,7 +103,8 @@ struct Car::CarImpl {
 
     if (haveCollision) {
       netDisplacement.normalise();
-      velocity -= netDisplacement * (netDisplacement.dotProduct(velocity));
+      velocity *= CAR_VELOCITY_COLLISION_DECAY;
+      velocity -= netDisplacement * 1.3f * (netDisplacement.dotProduct(velocity));
     }
   }
 

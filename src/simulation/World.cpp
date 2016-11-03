@@ -16,13 +16,9 @@ struct World::WorldImpl {
     car->Render(renderer);
   }
 
-  void Update(float seconds) {
-    car->Update(seconds, track.get());
-  }
+  void Update(float seconds) { car->Update(seconds, track.get()); }
 
-  Car* GetCar(void) {
-    return car.get();
-  }
+  Car *GetCar(void) { return car.get(); }
 };
 
 World::World(const sptr<Track> &track, const CarDef &carDef) : impl(new WorldImpl(track, carDef)) {}
@@ -32,4 +28,4 @@ void World::Render(renderer::Renderer *renderer) const { impl->Render(renderer);
 
 void World::Update(float seconds) { impl->Update(seconds); }
 
-Car* World::GetCar(void) { return impl->GetCar(); }
+Car *World::GetCar(void) { return impl->GetCar(); }
