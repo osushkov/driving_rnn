@@ -36,11 +36,7 @@ struct Track::TrackImpl {
     generateWalls(spec);
 
     startPos = trackLine[0];
-    if (rand() % 2 == 0) {
-      startOrientation = (trackLine[1] - startPos).normalised();
-    } else {
-      startOrientation = (trackLine.back() - startPos).normalised();
-    }
+    startOrientation = (trackLine[1] - startPos).normalised();
   }
 
   void Render(renderer::Renderer *renderer) const {

@@ -1,11 +1,24 @@
 
 #include "Timer.hpp"
+#include <unistd.h>
+#include <cmath>
 
 static const unsigned MICRO_SECONDS_IN_SECOND = 1000000;
 
 void Timer::Start(void) { gettimeofday(&startTime, NULL); }
 
 void Timer::Stop(void) { gettimeofday(&endTime, NULL); }
+
+void Timer::Sleep(float seconds) const {
+  int wholeSeconds = static_cast<int>(floorf(seconds));
+  unsigned microseconds = (seconds - wholeSeconds) * MICRO_SECONDS_IN_SECOND;
+
+  if (wholeSeconds > 0) {
+    sleep(wholeSeconds);
+  }
+
+  usleep(microseconds);
+}
 
 float Timer::GetIntervalElapsedSeconds(void) const {
   unsigned seconds = endTime.tv_sec - startTime.tv_sec;

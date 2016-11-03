@@ -55,6 +55,10 @@ struct Car::CarImpl {
     pos += velocity * seconds;
   }
 
+  Vector2 GetPos(void) const {
+    return pos;
+  }
+
   pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track) {
     return make_pair(vector<ColorRGB>(), vector<ColorRGB>());
   }
@@ -75,5 +79,7 @@ void Car::SetAcceleration(float amount) { impl->SetAcceleration(amount); }
 void Car::SetTurn(float amount) { impl->SetTurn(amount); }
 
 void Car::Update(float seconds, Track *track) { impl->Update(seconds, track); }
+
+Vector2 Car::GetPos(void) const { return impl->GetPos(); }
 
 pair<vector<ColorRGB>, vector<ColorRGB>> Car::EyeView(Track *track) { return impl->EyeView(track); }

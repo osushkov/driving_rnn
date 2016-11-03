@@ -9,6 +9,8 @@ public:
   void Start(void);
   void Stop(void);
 
+  void Sleep(float seconds) const;
+
   float GetIntervalElapsedSeconds(void) const;
   unsigned GetIntervalElapsedMicroseconds(void) const;
 

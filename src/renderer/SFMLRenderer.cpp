@@ -5,13 +5,21 @@
 
 using namespace renderer;
 
+static sf::ContextSettings settings(void) {
+  sf::ContextSettings s;
+  s.antialiasingLevel = 2;
+  return s;
+}
+
 struct SFMLRenderer::SFMLRendererImpl {
   sf::RenderWindow window;
   sf::View view;
+  float widthHeightRatio;
 
   SFMLRendererImpl(unsigned width, unsigned height, const string &windowName)
-      : window(sf::VideoMode(width, height), windowName),
-        view(sf::Vector2f(0, 0), sf::Vector2f(100, (100 * height) / width)) {
+      : window(sf::VideoMode(width, height), windowName, sf::Style::Default, settings()),
+        view(sf::Vector2f(0, 0), sf::Vector2f(100, (100 * height) / width)),
+        widthHeightRatio(static_cast<float>(width) / static_cast<float>(height)) {
     assert(width > 0 && height > 0);
 
     view.rotate(180.0f);
@@ -20,8 +28,14 @@ struct SFMLRenderer::SFMLRendererImpl {
   }
 
   void SwapBuffers(void) {
+    window.setView(view);
     window.display();
     window.clear();
+  }
+
+  void Focus(const Vector2 &point, float viewportWidth) {
+    view.setCenter(sf::Vector2f(point.x, point.y));
+    view.setSize(sf::Vector2f(viewportWidth, viewportWidth / widthHeightRatio));
   }
 
   void DrawCircle(const Vector2 &pos, float radius, const ColorRGB &c) {
@@ -29,7 +43,9 @@ struct SFMLRenderer::SFMLRendererImpl {
 
     sf::CircleShape circle(radius);
     circle.setPosition(pos.x - radius, pos.y - radius);
-    circle.setFillColor(sf::Color(255 * c.r, 255 * c.g, 255 * c.b));
+    circle.setOutlineColor(sf::Color(255 * c.r, 255 * c.g, 255 * c.b));
+    circle.setFillColor(sf::Color(255 * c.r, 255 * c.g, 255 * c.b, 0));
+    circle.setOutlineThickness(0.05f);
 
     window.draw(circle);
   }
@@ -61,6 +77,10 @@ SFMLRenderer::SFMLRenderer(unsigned width, unsigned height, const string &window
 SFMLRenderer::~SFMLRenderer() = default;
 
 void SFMLRenderer::SwapBuffers(void) { impl->SwapBuffers(); }
+
+void SFMLRenderer::Focus(const Vector2 &point, float viewportWidth) {
+  impl->Focus(point, viewportWidth);
+}
 
 void SFMLRenderer::DrawCircle(const Vector2 &pos, float radius, const ColorRGB &c) {
   impl->DrawCircle(pos, radius, c);

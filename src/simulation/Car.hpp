@@ -17,6 +17,9 @@ struct CarDef {
 
   float turnRate;
   float accelRate;
+
+  CarDef(float size, float eyeSeparation, float turnRate, float accelRate)
+      : size(size), eyeSeparation(eyeSeparation), turnRate(turnRate), accelRate(accelRate) {}
 };
 
 class Car {
@@ -29,6 +32,8 @@ public:
   void SetAcceleration(float amount);
   void SetTurn(float amount);
   void Update(float seconds, Track *track);
+
+  Vector2 GetPos(void) const;
 
   pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track);
 

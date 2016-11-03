@@ -14,6 +14,8 @@ public:
 
   void SwapBuffers(void) override;
 
+  void Focus(const Vector2 &point, float viewportWidth) override;
+
   void DrawCircle(const Vector2 &pos, float radius, const ColorRGB &c) override;
   void DrawRectangle(const Vector2 &halfExtents, const Vector2 &pos, const ColorRGB &c) override;
   void DrawLine(const std::pair<Vector2, ColorRGB> &start,
