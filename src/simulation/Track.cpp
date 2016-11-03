@@ -121,6 +121,7 @@ struct Track::TrackImpl {
         result.push_back(cr);
       }
     }
+
     return result;
   }
 

@@ -36,7 +36,6 @@ int main(int argc, char **argv) {
     if (gap < updateIntervalSeconds) {
       timer.Sleep(updateIntervalSeconds - gap);
     }
-    lastFrameTime = curTime;
 
     world->GetCar()->SetTurn(0.0f);
     world->GetCar()->SetAcceleration(0.0f);
@@ -53,6 +52,7 @@ int main(int argc, char **argv) {
       world->GetCar()->SetAcceleration(-1.0f);
     }
 
+    lastFrameTime = timer.GetElapsedSeconds();
     world->Update(updateIntervalSeconds);
 
     renderer->Focus(world->GetCar()->GetPos(), 20.0f);

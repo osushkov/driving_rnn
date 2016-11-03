@@ -31,9 +31,17 @@ CollisionResult CollisionLineSegment::IntersectSphere(const CollisionSphere &sph
   std::pair<Vector2, float> nearestSegmentPoint =
       Geometry::PointSegmentDist(sphere.centre, start, end);
 
-  if (nearestSegmentPoint.second < sphere.radius) {
-    Vector2 collisionNormal = (sphere.centre - nearestSegmentPoint.first).normalised();
-    return CollisionResult::At(nearestSegmentPoint.first, collisionNormal);
+  if (nearestSegmentPoint.second < Geometry::EPSILON) {
+    Vector2 collisionNormal = (start - sphere.centre).normalised();
+    return CollisionResult::At(sphere.centre + collisionNormal * sphere.radius, collisionNormal);
+  } else if (nearestSegmentPoint.second < sphere.radius) {
+    float cd = nearestSegmentPoint.second;
+    float y = sqrtf(sphere.radius * sphere.radius - cd * cd);
+
+    Vector2 nearestToStart = (start - nearestSegmentPoint.first).normalised();
+    Vector2 cp = nearestSegmentPoint.first + nearestToStart * y;
+    Vector2 collisionNormal = (cp - sphere.centre).normalised();
+    return CollisionResult::At(cp, collisionNormal);
   } else {
     return CollisionResult::None();
   }
@@ -47,8 +55,8 @@ CollisionLineSegment::IntersectLineSegment(const CollisionLineSegment &otherLine
   if (!linesIntersect.valid()) {
     return CollisionResult::None();
   } else {
-    Vector2 collisionNormal = (start - end).normalised();
-    collisionNormal.rotate(static_cast<float>(M_PI) / 2.0f);
+    Vector2 collisionNormal = (otherLine.end - otherLine.start).normalised();
+    collisionNormal.rotate(static_cast<float>(M_PI) / 2.0f); // TODO: not correct
 
     return CollisionResult::At(linesIntersect.val(), collisionNormal);
   }

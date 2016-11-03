@@ -1,6 +1,7 @@
 
 #include "Car.hpp"
 #include "../math/Math.hpp"
+#include "../math/Geometry.hpp"
 #include <cmath>
 
 using namespace simulation;
@@ -53,10 +54,36 @@ struct Car::CarImpl {
     velocity *= powf(CAR_VELOCITY_DECAY, seconds);
 
     pos += velocity * seconds;
+
+    checkCollisions(track);
   }
 
-  Vector2 GetPos(void) const {
-    return pos;
+  void checkCollisions(Track *track) {
+    Vector2 netDisplacement;
+    bool haveCollision = false;
+
+    for (unsigned i = 0; i < 3; i++) {
+      vector<CollisionResult> collisions = track->IntersectSphere(pos, def.size / 2.0f);
+      if (collisions.empty()) {
+        break;
+      }
+
+      CollisionResult &c = collisions.front();
+
+      float normalDist = (pos - c.collisionPoint).dotProduct(c.collisionNormal);
+      assert(normalDist <= (def.size / 2.0f + Geometry::EPSILON));
+
+      Vector2 displacement = c.collisionNormal * (def.size / 2.0f - normalDist);
+      pos += displacement;
+
+      netDisplacement += displacement;
+      haveCollision = true;
+    }
+
+    if (haveCollision) {
+      netDisplacement.normalise();
+      velocity -= netDisplacement * (netDisplacement.dotProduct(velocity));
+    }
   }
 
   pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track) {
@@ -80,6 +107,6 @@ void Car::SetTurn(float amount) { impl->SetTurn(amount); }
 
 void Car::Update(float seconds, Track *track) { impl->Update(seconds, track); }
 
-Vector2 Car::GetPos(void) const { return impl->GetPos(); }
+Vector2 Car::GetPos(void) const { return impl->pos; }
 
 pair<vector<ColorRGB>, vector<ColorRGB>> Car::EyeView(Track *track) { return impl->EyeView(track); }
