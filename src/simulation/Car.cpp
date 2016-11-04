@@ -66,6 +66,12 @@ struct Car::CarImpl {
     Vector2 turnIndicatorEnd = turnIndicatorStart + left * (turnFrac * def.size * 0.7f);
     renderer->DrawLine(make_pair(turnIndicatorStart, CAR_TURN_COLOR),
                        make_pair(turnIndicatorEnd, CAR_TURN_COLOR));
+
+    // Draw the eye rays.
+    for (const auto& ler : leftEyeRays.second) {
+      renderer->DrawLine(make_pair(leftEyeRays.first, ColorRGB::White()),
+                         make_pair(ler.pos, ColorRGB::White()));
+    }
   }
 
   void SetAcceleration(float amount) { accelFrac = amount; }
