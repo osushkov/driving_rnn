@@ -73,7 +73,7 @@ struct Track::TrackImpl {
     return bestResult;
   }
 
-  Maybe<ColorRGB> ColorAlongRay(const Vector2 &start, const Vector2 &dir) const {
+  Maybe<TrackRayIntersection> IntersectRay(const Vector2 &start, const Vector2 &dir) const {
     CollisionLineSegment line(start, start + dir * trackMaxSize);
 
     // TODO: if it makes sense we can have a quad-tree or some kind of spatial partitioning
@@ -97,11 +97,11 @@ struct Track::TrackImpl {
       float distToStart = wallCollision.collisionPoint.distanceTo(walls[wallIndex].line.start);
       float f = distToStart / walls[wallIndex].line.length;
       f = std::max(0.0f, std::min(1.0f, f)); // clip to range 0 - 1
+      ColorRGB color(walls[wallIndex].endColor * f + walls[wallIndex].startColor * (1.0f - f));
 
-      return Maybe<ColorRGB>(walls[wallIndex].endColor * f +
-                             walls[wallIndex].startColor * (1.0f - f));
+      return Maybe<TrackRayIntersection>(TrackRayIntersection(wallCollision.collisionPoint, color));
     } else {
-      return Maybe<ColorRGB>::none;
+      return Maybe<TrackRayIntersection>::none;
     }
   }
 
@@ -250,8 +250,8 @@ float Track::DistanceAlongTrack(const Vector2 &point) const {
   return impl->DistanceAlongTrack(point);
 }
 
-Maybe<ColorRGB> Track::ColorAlongRay(const Vector2 &start, const Vector2 &dir) const {
-  return impl->ColorAlongRay(start, dir);
+Maybe<TrackRayIntersection> Track::IntersectRay(const Vector2 &start, const Vector2 &dir) const {
+  return impl->IntersectRay(start, dir);
 }
 
 vector<CollisionResult> Track::IntersectSphere(const Vector2 &pos, float radius) const {

@@ -7,6 +7,7 @@ struct ColorRGB {
   float g;
   float b;
 
+  static ColorRGB Black(void);
   static ColorRGB White(void);
   static ColorRGB Red(void);
   static ColorRGB Green(void);

@@ -17,6 +17,8 @@ static constexpr float CAR_VELOCITY_COLLISION_DECAY = 0.3f;
 static constexpr float EYE_FOV = 90.0f * static_cast<float>(M_PI) / 180.0f;
 static constexpr unsigned PIXELS_PER_EYE = 15;
 static constexpr unsigned SAMPLER_PER_PIXEL = 5;
+static constexpr float FOV_PER_PIXEL = EYE_FOV / static_cast<float>(PIXELS_PER_EYE);
+static constexpr float FOV_PER_SAMPLE = FOV_PER_PIXEL / static_cast<float>(SAMPLER_PER_PIXEL);
 
 struct Car::CarImpl {
   CarDef def;
@@ -29,6 +31,9 @@ struct Car::CarImpl {
 
   float turnFrac;
   float accelFrac;
+
+  pair<Vector2, vector<TrackRayIntersection>> leftEyeRays;
+  pair<Vector2, vector<TrackRayIntersection>> rightEyeRays;
 
   CarImpl(const CarDef &def, Vector2 startPos, Vector2 startOrientation)
       : def(def), pos(startPos), velocity(0.0f, 0.0f), forward(startOrientation), turnFrac(0.0f),
@@ -77,6 +82,7 @@ struct Car::CarImpl {
     pos += velocity * seconds;
 
     checkCollisions(seconds, track);
+    sampleEyes(track);
   }
 
   void checkCollisions(float seconds, Track *track) {
@@ -108,12 +114,60 @@ struct Car::CarImpl {
     }
   }
 
-  pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track) {
-    return make_pair(vector<ColorRGB>(), vector<ColorRGB>());
+  void sampleEyes(Track *track) {
+    leftEyeRays.first = pos + left * (def.eyeSeparation / 2.0f);
+    leftEyeRays.second.clear();
+    sampleFromEyePosition(track, leftEyeRays.first, leftEyeRays.second);
+
+    rightEyeRays.first = pos - left * (def.eyeSeparation / 2.0f);
+    rightEyeRays.second.clear();
+    sampleFromEyePosition(track, rightEyeRays.first, rightEyeRays.second);
   }
 
-  Vector2 leftEyePosition(void) { return pos + left * (def.eyeSeparation / 2.0f); }
-  Vector2 rightEyePosition(void) { return pos - left * (def.eyeSeparation / 2.0f); }
+  void sampleFromEyePosition(Track *track, const Vector2 &eyePos,
+                             vector<TrackRayIntersection> &samplesOut) {
+    assert(samplesOut.empty());
+
+    Vector2 pixelRay = forward.rotated(EYE_FOV / 2.0f  - FOV_PER_PIXEL / 2.0f);
+    for (unsigned pi = 0; pi < PIXELS_PER_EYE; pi++) {
+      ColorRGB avrgColor;
+      Vector2 avrgPosition;
+      unsigned numSamples = 0;
+
+      Vector2 sampleRay = pixelRay.rotated(FOV_PER_PIXEL / 2.0f  - FOV_PER_SAMPLE / 2.0f);
+      for (unsigned si = 0; si < SAMPLER_PER_PIXEL; si++) {
+        Maybe<TrackRayIntersection> trackIntersection = track->IntersectRay(eyePos, sampleRay);
+        if (trackIntersection.valid()) {
+          avrgColor += trackIntersection.val().color;
+          avrgPosition += trackIntersection.val().pos;
+          numSamples++;
+        }
+        sampleRay.rotate(-FOV_PER_SAMPLE);
+      }
+
+      avrgColor *= 1.0f / static_cast<float>(numSamples);
+      avrgPosition *= 1.0f / static_cast<float>(numSamples);
+      samplesOut.emplace_back(avrgPosition, avrgColor);
+
+      pixelRay.rotate(-FOV_PER_PIXEL);
+    }
+  }
+
+  pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track) {
+    sampleEyes(track);
+
+    pair<vector<ColorRGB>, vector<ColorRGB>> result;
+    result.first.reserve(leftEyeRays.second.size());
+    result.second.reserve(rightEyeRays.second.size());
+
+    for (const auto& ler : leftEyeRays.second) {
+      result.first.push_back(ler.color);
+    }
+    for (const auto& rer : rightEyeRays.second) {
+      result.second.push_back(rer.color);
+    }
+    return result;
+  }
 };
 
 Car::Car(const CarDef &def, Vector2 startPos, Vector2 startOrientation)

@@ -26,6 +26,13 @@ struct TrackSpec {
   }
 };
 
+struct TrackRayIntersection {
+  Vector2 pos;
+  ColorRGB color;
+
+  TrackRayIntersection(const Vector2 &pos, const ColorRGB &color) : pos(pos), color(color) {}
+};
+
 class Track {
 public:
   Track(const TrackSpec &spec);
@@ -36,8 +43,8 @@ public:
   pair<Vector2, Vector2> StartPosAndOrientation(void) const;
 
   float DistanceAlongTrack(const Vector2 &point) const;
-  Maybe<ColorRGB> ColorAlongRay(const Vector2 &start, const Vector2 &dir) const;
 
+  Maybe<TrackRayIntersection> IntersectRay(const Vector2 &start, const Vector2 &dir) const;
   vector<CollisionResult> IntersectSphere(const Vector2 &pos, float radius) const;
 
 private:
