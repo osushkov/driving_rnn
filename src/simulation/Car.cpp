@@ -44,11 +44,11 @@ struct Car::CarImpl {
   void Render(renderer::Renderer *renderer) const {
     // Draw the eye rays.
     float fade = 0.2f;
-    for (const auto& ler : leftEyeRays.second) {
+    for (const auto &ler : leftEyeRays.second) {
       renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
                          make_pair(ler.pos, ler.color * fade));
     }
-    for (const auto& rer : rightEyeRays.second) {
+    for (const auto &rer : rightEyeRays.second) {
       renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
                          make_pair(rer.pos, rer.color * fade));
     }
@@ -139,13 +139,13 @@ struct Car::CarImpl {
                              vector<TrackRayIntersection> &samplesOut) {
     assert(samplesOut.empty());
 
-    Vector2 pixelRay = forward.rotated(EYE_FOV / 2.0f  - FOV_PER_PIXEL / 2.0f);
+    Vector2 pixelRay = forward.rotated(EYE_FOV / 2.0f - FOV_PER_PIXEL / 2.0f);
     for (unsigned pi = 0; pi < PIXELS_PER_EYE; pi++) {
       ColorRGB avrgColor;
       Vector2 avrgPosition;
       unsigned numSamples = 0;
 
-      Vector2 sampleRay = pixelRay.rotated(FOV_PER_PIXEL / 2.0f  - FOV_PER_SAMPLE / 2.0f);
+      Vector2 sampleRay = pixelRay.rotated(FOV_PER_PIXEL / 2.0f - FOV_PER_SAMPLE / 2.0f);
       for (unsigned si = 0; si < SAMPLER_PER_PIXEL; si++) {
         Maybe<TrackRayIntersection> trackIntersection = track->IntersectRay(eyePos, sampleRay);
         if (trackIntersection.valid()) {
@@ -156,6 +156,7 @@ struct Car::CarImpl {
         sampleRay.rotate(-FOV_PER_SAMPLE);
       }
 
+      numSamples = std::max<unsigned>(1, numSamples);
       avrgColor *= 1.0f / static_cast<float>(numSamples);
       avrgPosition *= 1.0f / static_cast<float>(numSamples);
       samplesOut.emplace_back(avrgPosition, avrgColor);
@@ -171,10 +172,10 @@ struct Car::CarImpl {
     result.first.reserve(leftEyeRays.second.size());
     result.second.reserve(rightEyeRays.second.size());
 
-    for (const auto& ler : leftEyeRays.second) {
+    for (const auto &ler : leftEyeRays.second) {
       result.first.push_back(ler.color);
     }
-    for (const auto& rer : rightEyeRays.second) {
+    for (const auto &rer : rightEyeRays.second) {
       result.second.push_back(rer.color);
     }
     return result;

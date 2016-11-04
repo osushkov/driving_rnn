@@ -163,6 +163,7 @@ struct Track::TrackImpl {
   }
 
   void smooth(vector<float> &target, int neighbourhood, int passes) const {
+    vector<float> result(target.size());
     for (int p = 0; p < passes; p++) {
       for (unsigned i = 0; i < target.size(); i++) {
         float sum = 0.0f;
@@ -170,13 +171,14 @@ struct Track::TrackImpl {
           unsigned index = (i + n + target.size()) % target.size();
           sum += target[index];
         }
-        target[i] = sum / (neighbourhood * 2.0f + 1.0f);
+        result[i] = sum / (neighbourhood * 2.0f + 1.0f);
       }
+      target = result;
     }
   }
 
   bool generateWalls(const TrackSpec &spec) {
-    const float offsetAmount = spec.trackWidth / 2.0f;
+    vector<float> trackWidths = genTrackWidths(spec);
 
     vector<Vector2> leftWallVerts;
     vector<Vector2> rightWallVerts;
@@ -184,43 +186,107 @@ struct Track::TrackImpl {
     rightWallVerts.reserve(trackLine.size());
 
     for (unsigned i = 0; i < trackLine.size(); i++) {
-      Vector2 offset = offsetDirection(i) * offsetAmount;
+      Vector2 offset = offsetDirection(i) * trackWidths[i] / 2.0f;
       leftWallVerts.emplace_back(trackLine[i] + offset);
       rightWallVerts.emplace_back(trackLine[i] - offset);
     }
 
-    float minX = leftWallVerts[0].x;
-    float maxX = minX;
+    vector<WallSegment> leftWall, rightWall;
+    leftWall.reserve(trackLine.size());
+    rightWall.reserve(trackLine.size());
 
-    float minY = leftWallVerts[0].y;
-    float maxY = minY;
-
-    walls.reserve(2 * trackLine.size());
     for (unsigned i = 0; i < trackLine.size(); i++) {
-      minX = std::min(minX, leftWallVerts[i].x);
-      minX = std::min(minX, rightWallVerts[i].x);
-      minY = std::min(minY, leftWallVerts[i].y);
-      minY = std::min(minY, rightWallVerts[i].y);
-      maxX = std::max(maxX, leftWallVerts[i].x);
-      maxX = std::max(maxX, rightWallVerts[i].x);
-      maxY = std::max(maxY, leftWallVerts[i].y);
-      maxY = std::max(maxY, rightWallVerts[i].y);
-
       int nextIndex = (i + 1) % trackLine.size();
 
       Vector2 toNextLeft = (leftWallVerts[nextIndex] - leftWallVerts[i]).normalised();
       Vector2 toNextRight = (rightWallVerts[nextIndex] - rightWallVerts[i]).normalised();
 
-      walls.emplace_back(CollisionLineSegment(leftWallVerts[i], leftWallVerts[nextIndex]),
-                         toNextLeft.rotated(-static_cast<float>(M_PI) / 2.0f), ColorRGB::Blue(),
-                         ColorRGB::Green());
-      walls.emplace_back(CollisionLineSegment(rightWallVerts[i], rightWallVerts[nextIndex]),
-                         toNextRight.rotated(static_cast<float>(M_PI) / 2.0f), ColorRGB::White(),
-                         ColorRGB::Red());
+      leftWall.emplace_back(CollisionLineSegment(leftWallVerts[i], leftWallVerts[nextIndex]),
+                            toNextLeft.rotated(-static_cast<float>(M_PI) / 2.0f), ColorRGB::Blue(),
+                            ColorRGB::Green());
+      rightWall.emplace_back(CollisionLineSegment(rightWallVerts[i], rightWallVerts[nextIndex]),
+                             toNextRight.rotated(static_cast<float>(M_PI) / 2.0f),
+                             ColorRGB::White(), ColorRGB::Red());
+    }
+
+    leftWall = deIntersectWalls(leftWall);
+    rightWall = deIntersectWalls(rightWall);
+    walls.insert(walls.end(), leftWall.begin(), leftWall.end());
+    walls.insert(walls.end(), rightWall.begin(), rightWall.end());
+
+    computeTrackMaxSize();
+    return true;
+  }
+
+  vector<WallSegment> deIntersectWalls(const vector<WallSegment> &prelimWalls) {
+    vector<WallSegment> result;
+    result.reserve(prelimWalls.size());
+
+    const unsigned maxLookahead = 5;
+
+    for (unsigned i = 0; i < prelimWalls.size(); i++) {
+      bool haveIntersection = false;
+
+      for (unsigned offset = maxLookahead; offset >= 2; offset--) {
+        unsigned ni = (i + offset) % prelimWalls.size();
+        CollisionResult cr = prelimWalls[i].line.IntersectLineSegment(prelimWalls[ni].line);
+
+        if (cr.haveCollision) {
+          WallSegment modifiedLineA = prelimWalls[i];
+          WallSegment modifiedLineB = prelimWalls[ni];
+
+          modifiedLineA.line.Set(modifiedLineA.line.start, cr.collisionPoint);
+          modifiedLineB.line.Set(cr.collisionPoint, modifiedLineB.line.end);
+
+          result.push_back(modifiedLineA);
+          result.push_back(modifiedLineB);
+
+          i = ni;
+          haveIntersection = true;
+          break;
+        }
+      }
+
+      if (!haveIntersection) {
+        result.push_back(prelimWalls[i]);
+      }
+    }
+
+    cout << "num walls: " << result.size() << endl;
+    return result;
+  }
+
+  void computeTrackMaxSize(void) {
+    float minX = walls[0].line.start.x;
+    float maxX = minX;
+
+    float minY = walls[0].line.start.y;
+    float maxY = minY;
+
+    for (const auto &w : walls) {
+      minX = std::min(minX, w.line.start.x);
+      minY = std::min(minY, w.line.start.y);
+      maxX = std::max(maxX, w.line.start.x);
+      maxY = std::max(maxY, w.line.start.y);
     }
 
     trackMaxSize = sqrtf((maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY));
-    return true;
+  }
+
+  vector<float> genTrackWidths(const TrackSpec &spec) {
+    unsigned extra = 5;
+    vector<float> result(trackLine.size() + extra);
+    for (unsigned i = 0; i < trackLine.size(); i++) {
+      result[i] = math::RandInterval(spec.trackMinWidth, spec.trackMaxWidth);
+    }
+    for (unsigned i = 0; i < extra; i++) {
+      result[i + trackLine.size()] = result[i];
+    }
+    smooth(result, 1, 1);
+    for (unsigned i = 0; i < extra; i++) {
+      result.pop_back();
+    }
+    return result;
   }
 
   Vector2 offsetDirection(int trackIndex) const {

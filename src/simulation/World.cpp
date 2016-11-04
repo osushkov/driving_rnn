@@ -15,7 +15,18 @@ struct World::WorldImpl {
     track->Render(renderer);
     car->Render(renderer);
 
-    renderer->DrawHUDCircle(Vector2(0.0f, 0.5f), 0.1f, ColorRGB::White());
+    // Render the pixels seen by each eye in the HUD.
+    pair<vector<ColorRGB>, vector<ColorRGB>> eyeView = car->EyeView(track.get());
+    float pixelBarSize = 0.6f;
+    float pixelSize = pixelBarSize / static_cast<float>(eyeView.first.size());
+    for (unsigned i = 0; i < eyeView.first.size(); i++) {
+      renderer->DrawHUDCircle(Vector2(-0.75f + i * pixelSize, -0.9f), pixelSize / 2.0f,
+                              eyeView.first[i]);
+    }
+    for (int i = 0; i < eyeView.second.size(); i++) {
+      renderer->DrawHUDCircle(Vector2(0.75f + -pixelBarSize + i * pixelSize, -0.9f),
+                              pixelSize / 2.0f, eyeView.second[i]);
+    }
   }
 
   void Update(float seconds) { car->Update(seconds, track.get()); }

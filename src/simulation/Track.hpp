@@ -10,18 +10,19 @@ namespace simulation {
 
 struct TrackSpec {
   float radius;
-  float trackWidth;
+  float trackMinWidth;
+  float trackMaxWidth;
 
   int numLinePoints;
-  int numMods;
   float maxModStrength;
 
-  TrackSpec(float radius, float trackWidth, int numLinePoints, int numMods, float maxModStrength)
-      : radius(radius), trackWidth(trackWidth), numLinePoints(numLinePoints), numMods(numMods),
-        maxModStrength(maxModStrength) {
+  TrackSpec(float radius, float trackMinWidth, float trackMaxWidth, int numLinePoints,
+            float maxModStrength)
+      : radius(radius), trackMinWidth(trackMinWidth), trackMaxWidth(trackMaxWidth),
+        numLinePoints(numLinePoints), maxModStrength(maxModStrength) {
 
     assert(radius > 0.0f);
-    assert(trackWidth > 0.0f);
+    assert(trackMinWidth > 0.0f && trackMinWidth <= trackMaxWidth);
     assert(numLinePoints >= 3);
   }
 };
