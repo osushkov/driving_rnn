@@ -14,6 +14,8 @@ struct World::WorldImpl {
   void Render(renderer::Renderer *renderer) const {
     track->Render(renderer);
     car->Render(renderer);
+
+    renderer->DrawHUDCircle(Vector2(0.0f, 0.5f), 0.1f, ColorRGB::White());
   }
 
   void Update(float seconds) { car->Update(seconds, track.get()); }

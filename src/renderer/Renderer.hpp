@@ -16,5 +16,7 @@ public:
   virtual void DrawRectangle(const Vector2 &halfExtents, const Vector2 &pos, const ColorRGB &c) = 0;
   virtual void DrawLine(const std::pair<Vector2, ColorRGB> &start,
                         const std::pair<Vector2, ColorRGB> &end) = 0;
+
+  virtual void DrawHUDCircle(const Vector2 &pos, float radius, const ColorRGB &c) = 0;
 };
 }

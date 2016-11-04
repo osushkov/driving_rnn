@@ -41,8 +41,8 @@ struct Track::TrackImpl {
 
   void Render(renderer::Renderer *renderer) const {
     for (const auto &wall : walls) {
-      renderer->DrawLine(make_pair(wall.line.start, wall.endColor),
-                         make_pair(wall.line.end, wall.startColor));
+      renderer->DrawLine(make_pair(wall.line.start, wall.startColor),
+                         make_pair(wall.line.end, wall.endColor));
     }
   }
 

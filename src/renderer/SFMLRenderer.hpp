@@ -21,6 +21,8 @@ public:
   void DrawLine(const std::pair<Vector2, ColorRGB> &start,
                 const std::pair<Vector2, ColorRGB> &end) override;
 
+  void DrawHUDCircle(const Vector2 &pos, float radius, const ColorRGB &c) override;
+
 private:
   struct SFMLRendererImpl;
   uptr<SFMLRendererImpl> impl;

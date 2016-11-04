@@ -42,6 +42,17 @@ struct Car::CarImpl {
   }
 
   void Render(renderer::Renderer *renderer) const {
+    // Draw the eye rays.
+    float fade = 0.2f;
+    for (const auto& ler : leftEyeRays.second) {
+      renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
+                         make_pair(ler.pos, ler.color * fade));
+    }
+    for (const auto& rer : rightEyeRays.second) {
+      renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
+                         make_pair(rer.pos, rer.color * fade));
+    }
+
     renderer->DrawCircle(pos, def.size / 2.0f, CAR_CIRCLE_COLOR);
 
     float arrowRadius = 0.8f * def.size / 2.0f;
@@ -66,12 +77,6 @@ struct Car::CarImpl {
     Vector2 turnIndicatorEnd = turnIndicatorStart + left * (turnFrac * def.size * 0.7f);
     renderer->DrawLine(make_pair(turnIndicatorStart, CAR_TURN_COLOR),
                        make_pair(turnIndicatorEnd, CAR_TURN_COLOR));
-
-    // Draw the eye rays.
-    for (const auto& ler : leftEyeRays.second) {
-      renderer->DrawLine(make_pair(leftEyeRays.first, ColorRGB::White()),
-                         make_pair(ler.pos, ColorRGB::White()));
-    }
   }
 
   void SetAcceleration(float amount) { accelFrac = amount; }

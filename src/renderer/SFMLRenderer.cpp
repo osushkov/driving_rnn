@@ -69,6 +69,20 @@ struct SFMLRenderer::SFMLRendererImpl {
 
     window.draw(line, 2, sf::Lines);
   }
+
+  void DrawHUDCircle(const Vector2 &pos, float radius, const ColorRGB &c) {
+    sf::Transform invView = view.getInverseTransform();
+
+    sf::Vector2f tPos = invView.transformPoint(pos.x, pos.y);
+    sf::Vector2f tR = invView.transformPoint(pos.x + radius, pos.y);
+    radius = fabsf(tR.x - tPos.x);
+
+    sf::CircleShape circle(radius);
+    circle.setPosition(tPos.x - radius, tPos.y - radius);
+    circle.setFillColor(sf::Color(255 * c.r, 255 * c.g, 255 * c.b));
+
+    window.draw(circle);
+  }
 };
 
 SFMLRenderer::SFMLRenderer(unsigned width, unsigned height, const string &windowName)
@@ -94,4 +108,8 @@ void SFMLRenderer::DrawRectangle(const Vector2 &halfExtents, const Vector2 &pos,
 void SFMLRenderer::DrawLine(const std::pair<Vector2, ColorRGB> &start,
                             const std::pair<Vector2, ColorRGB> &end) {
   impl->DrawLine(start, end);
+}
+
+void SFMLRenderer::DrawHUDCircle(const Vector2 &pos, float radius, const ColorRGB &c) {
+  impl->DrawHUDCircle(pos, radius, c);
 }
