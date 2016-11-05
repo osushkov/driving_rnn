@@ -23,6 +23,9 @@ struct WallSegment {
 };
 
 struct Track::TrackImpl {
+  vector<ColorRGB> leftWallPalette;
+  vector<ColorRGB> rightWallPalette;
+
   vector<WallSegment> walls;
   vector<Vector2> trackLine;
   float trackTotalLength;
@@ -32,6 +35,7 @@ struct Track::TrackImpl {
   Vector2 startOrientation;
 
   TrackImpl(const TrackSpec &spec) {
+    generateWallsPalette(spec);
     generateTrackLine(spec);
     generateWalls(spec);
 
@@ -99,7 +103,8 @@ struct Track::TrackImpl {
       f = std::max(0.0f, std::min(1.0f, f)); // clip to range 0 - 1
       ColorRGB color(walls[wallIndex].endColor * f + walls[wallIndex].startColor * (1.0f - f));
 
-      return Maybe<TrackRayIntersection>(TrackRayIntersection(wallCollision.collisionPoint, color));
+      return Maybe<TrackRayIntersection>(
+          TrackRayIntersection(wallCollision.collisionPoint, walls[wallIndex].normal, color));
     } else {
       return Maybe<TrackRayIntersection>::none;
     }
@@ -125,11 +130,23 @@ struct Track::TrackImpl {
     return result;
   }
 
+  void generateWallsPalette(const TrackSpec &spec) {
+    const float minChannelVal = 0.2f;
+    for (unsigned i = 0; i < spec.colorPaletteSize; i++) {
+      leftWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
+                                   math::RandInterval(minChannelVal, 1.0f),
+                                   math::RandInterval(minChannelVal, 1.0f));
+      rightWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
+                                    math::RandInterval(minChannelVal, 1.0f),
+                                    math::RandInterval(minChannelVal, 1.0f));
+    }
+  }
+
   bool generateTrackLine(const TrackSpec &spec) {
     vector<float> perturbAmounts = genPertubation(spec);
 
     trackLine.reserve(spec.numLinePoints);
-    for (int i = 0; i < spec.numLinePoints; i++) {
+    for (unsigned i = 0; i < spec.numLinePoints; i++) {
       float r = spec.radius + perturbAmounts[i];
       float theta = i * 2.0f * static_cast<float>(M_PI) / static_cast<float>(spec.numLinePoints);
       trackLine.emplace_back(cosf(theta) * r, sinf(theta) * r);
@@ -147,8 +164,8 @@ struct Track::TrackImpl {
   vector<float> genPertubation(const TrackSpec &spec) const {
     vector<float> perturbAmounts(spec.numLinePoints, 0.0f);
 
-    for (int scale = 0; scale < 6; scale++) {
-      int skip = 1 << scale;
+    for (unsigned scale = 0; scale < 6; scale++) {
+      unsigned skip = 1 << scale;
       float rs = pow(2.0f, scale);
 
       int indexOffset = rand() % spec.numLinePoints;
@@ -180,42 +197,106 @@ struct Track::TrackImpl {
   bool generateWalls(const TrackSpec &spec) {
     vector<float> trackWidths = genTrackWidths(spec);
 
-    vector<Vector2> leftWallVerts;
-    vector<Vector2> rightWallVerts;
-    leftWallVerts.reserve(trackLine.size());
-    rightWallVerts.reserve(trackLine.size());
+    vector<WallSegment> leftWall = generateLeftWall(trackWidths);
+    vector<WallSegment> rightWall = generateRightWall(trackWidths);
 
-    for (unsigned i = 0; i < trackLine.size(); i++) {
-      Vector2 offset = offsetDirection(i) * trackWidths[i] / 2.0f;
-      leftWallVerts.emplace_back(trackLine[i] + offset);
-      rightWallVerts.emplace_back(trackLine[i] - offset);
+    float totalLeftLength = 0.0f;
+    for (const auto &lw : leftWall) {
+      totalLeftLength += lw.line.length;
     }
 
-    vector<WallSegment> leftWall, rightWall;
-    leftWall.reserve(trackLine.size());
-    rightWall.reserve(trackLine.size());
-
-    for (unsigned i = 0; i < trackLine.size(); i++) {
-      int nextIndex = (i + 1) % trackLine.size();
-
-      Vector2 toNextLeft = (leftWallVerts[nextIndex] - leftWallVerts[i]).normalised();
-      Vector2 toNextRight = (rightWallVerts[nextIndex] - rightWallVerts[i]).normalised();
-
-      leftWall.emplace_back(CollisionLineSegment(leftWallVerts[i], leftWallVerts[nextIndex]),
-                            toNextLeft.rotated(-static_cast<float>(M_PI) / 2.0f), ColorRGB::Blue(),
-                            ColorRGB::Green());
-      rightWall.emplace_back(CollisionLineSegment(rightWallVerts[i], rightWallVerts[nextIndex]),
-                             toNextRight.rotated(static_cast<float>(M_PI) / 2.0f),
-                             ColorRGB::White(), ColorRGB::Red());
+    float lengthSoFar = 0.0;
+    for (auto &lw : leftWall) {
+      float nextLengthSoFar = lengthSoFar + lw.line.length;
+      lw.startColor = getProgressionColor(lengthSoFar / totalLeftLength, leftWallPalette);
+      lw.endColor = getProgressionColor(nextLengthSoFar / totalLeftLength, leftWallPalette);
+      lengthSoFar = nextLengthSoFar;
     }
 
-    leftWall = deIntersectWalls(leftWall);
-    rightWall = deIntersectWalls(rightWall);
+    float totalRightLength = 0.0f;
+    for (const auto &rw : rightWall) {
+      totalRightLength += rw.line.length;
+    }
+
+    lengthSoFar = 0.0;
+    for (auto &rw : rightWall) {
+      float nextLengthSoFar = lengthSoFar + rw.line.length;
+      rw.startColor = getProgressionColor(lengthSoFar / totalRightLength, rightWallPalette);
+      rw.endColor = getProgressionColor(nextLengthSoFar / totalRightLength, rightWallPalette);
+      lengthSoFar = nextLengthSoFar;
+    }
+
     walls.insert(walls.end(), leftWall.begin(), leftWall.end());
     walls.insert(walls.end(), rightWall.begin(), rightWall.end());
 
     computeTrackMaxSize();
     return true;
+  }
+
+  ColorRGB getProgressionColor(float progressFrac, const std::vector<ColorRGB> &colors) {
+    assert(progressFrac >= 0.0f && progressFrac <= 1.0f);
+    if (progressFrac >= 1.0f) {
+      progressFrac -= 1.0f;
+    }
+
+    unsigned lhsIndex = static_cast<unsigned>(floorf(progressFrac * colors.size())) % colors.size();
+    unsigned rhsIndex = (lhsIndex + 1) % colors.size();
+
+    float colorLength = 1.0f / static_cast<float>(colors.size());
+    float distFromLhsIndex = progressFrac - colorLength * lhsIndex;
+
+    assert(distFromLhsIndex >= 0.0f && distFromLhsIndex <= colorLength);
+
+    float lhsComponent = distFromLhsIndex / colorLength;
+    float rhsComponent = 1.0f - lhsComponent;
+
+    return colors[lhsIndex] * lhsComponent + colors[rhsIndex] * rhsComponent;
+  }
+
+  vector<WallSegment> generateLeftWall(const vector<float> &trackWidths) {
+    vector<Vector2> leftWallVerts;
+    leftWallVerts.reserve(trackLine.size());
+
+    for (unsigned i = 0; i < trackLine.size(); i++) {
+      Vector2 offset = offsetDirection(i) * trackWidths[i] / 2.0f;
+      leftWallVerts.emplace_back(trackLine[i] + offset);
+    }
+
+    vector<WallSegment> leftWall;
+    leftWall.reserve(trackLine.size());
+
+    for (unsigned i = 0; i < trackLine.size(); i++) {
+      int nextIndex = (i + 1) % trackLine.size();
+      Vector2 toNextLeft = (leftWallVerts[nextIndex] - leftWallVerts[i]).normalised();
+      leftWall.emplace_back(CollisionLineSegment(leftWallVerts[i], leftWallVerts[nextIndex]),
+                            toNextLeft.rotated(-static_cast<float>(M_PI) / 2.0f), ColorRGB::Blue(),
+                            ColorRGB::Green());
+    }
+
+    return deIntersectWalls(leftWall);
+  }
+
+  vector<WallSegment> generateRightWall(const vector<float> &trackWidths) {
+    vector<Vector2> rightWallVerts;
+    rightWallVerts.reserve(trackLine.size());
+
+    for (unsigned i = 0; i < trackLine.size(); i++) {
+      Vector2 offset = offsetDirection(i) * trackWidths[i] / 2.0f;
+      rightWallVerts.emplace_back(trackLine[i] - offset);
+    }
+
+    vector<WallSegment> rightWall;
+    rightWall.reserve(trackLine.size());
+
+    for (unsigned i = 0; i < trackLine.size(); i++) {
+      int nextIndex = (i + 1) % trackLine.size();
+      Vector2 toNextRight = (rightWallVerts[nextIndex] - rightWallVerts[i]).normalised();
+      rightWall.emplace_back(CollisionLineSegment(rightWallVerts[i], rightWallVerts[nextIndex]),
+                             toNextRight.rotated(static_cast<float>(M_PI) / 2.0f),
+                             ColorRGB::White(), ColorRGB::Red());
+    }
+
+    return deIntersectWalls(rightWall);
   }
 
   vector<WallSegment> deIntersectWalls(const vector<WallSegment> &prelimWalls) {
@@ -229,19 +310,20 @@ struct Track::TrackImpl {
 
       for (unsigned offset = maxLookahead; offset >= 2; offset--) {
         unsigned ni = (i + offset) % prelimWalls.size();
+
         CollisionResult cr = prelimWalls[i].line.IntersectLineSegment(prelimWalls[ni].line);
 
         if (cr.haveCollision) {
           WallSegment modifiedLineA = prelimWalls[i];
-          WallSegment modifiedLineB = prelimWalls[ni];
-
-          modifiedLineA.line.Set(modifiedLineA.line.start, cr.collisionPoint);
-          modifiedLineB.line.Set(cr.collisionPoint, modifiedLineB.line.end);
-
+          modifiedLineA.line.Set(modifiedLineA.line.start, prelimWalls[ni].line.start);
           result.push_back(modifiedLineA);
-          result.push_back(modifiedLineB);
 
-          i = ni;
+          unsigned pni = (i + offset - 1) % prelimWalls.size();
+          if (pni < i) {
+            i = prelimWalls.size();
+          } else {
+            i = pni;
+          }
           haveIntersection = true;
           break;
         }
@@ -252,7 +334,6 @@ struct Track::TrackImpl {
       }
     }
 
-    cout << "num walls: " << result.size() << endl;
     return result;
   }
 

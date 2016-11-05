@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
   std::cout << "hello world" << std::endl;
 
   uptr<SFMLRenderer> renderer = make_unique<SFMLRenderer>(800, 800, "Hello world");
-  sptr<Track> track = make_shared<Track>(TrackSpec(20.0f, 1.5f, 4.0f, 100, 5.0));
+  sptr<Track> track = make_shared<Track>(TrackSpec(20.0f, 1.5f, 4.0f, 100, 20, 5.0));
   uptr<World> world = make_unique<World>(track, CarDef(0.5f, 0.4, 3.0f, 5.0f));
 
   Timer timer;
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     lastFrameTime = timer.GetElapsedSeconds();
     world->Update(updateIntervalSeconds);
 
-    renderer->Focus(world->GetCar()->GetPos(), 100.0f);
+    renderer->Focus(world->GetCar()->GetPos(), 20.0f);
     world->Render(renderer.get());
     renderer->SwapBuffers();
   }

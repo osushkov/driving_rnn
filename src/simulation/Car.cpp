@@ -90,16 +90,50 @@ struct Car::CarImpl {
     velocity += forward * (seconds * accelFrac * def.accelRate);
     velocity *= powf(CAR_VELOCITY_DECAY, seconds);
 
+    Vector2 prevPos = pos;
     pos += velocity * seconds;
 
-    checkCollisions(seconds, track);
+    checkCollisions(seconds, track, prevPos);
     sampleEyes(track);
   }
 
-  void checkCollisions(float seconds, Track *track) {
+  void checkCollisions(float seconds, Track *track, const Vector2 &prevPos) {
+    bool haveCollision = checkCollisionsRayMethod(seconds, track, prevPos);
+    haveCollision |= checkCollisionsDisplacementMethod(seconds, track);
+    if (haveCollision) {
+      velocity *= CAR_VELOCITY_COLLISION_DECAY;
+    }
+  }
+
+  bool checkCollisionsRayMethod(float seconds, Track *track, const Vector2 &prevPos) {
+    Vector2 displacementDir = pos - prevPos;
+    if (displacementDir.length2() < Geometry::EPSILON) {
+      return false;
+    }
+    displacementDir.normalise();
+    Maybe<TrackRayIntersection> tIntersect = track->IntersectRay(prevPos, displacementDir);
+
+    if (!tIntersect.valid() ||
+        Geometry::PointSegmentDist(tIntersect.val().pos, prevPos, pos).second > (def.size / 2.0f)) {
+      return false;
+    }
+
+    velocity = velocity.reflected(tIntersect.val().normal);
+
+    float h =
+        (def.size / 2.0f) / -displacementDir.dotProduct(tIntersect.val().normal) + 0.05 * def.size;
+    pos = tIntersect.val().pos - displacementDir * h;
+
+    return true;
+  }
+
+  bool checkCollisionsDisplacementMethod(float seconds, Track *track) {
     Vector2 netDisplacement;
     bool haveCollision = false;
 
+    // We do this iteratively, up to N times, in case there is a charp concave pair of walls
+    // such that displacing from a wall along its normal actualy makes you intersect the other
+    // wall.
     for (unsigned i = 0; i < 3; i++) {
       vector<CollisionResult> collisions = track->IntersectSphere(pos, def.size / 2.0f);
       if (collisions.empty()) {
@@ -120,9 +154,10 @@ struct Car::CarImpl {
 
     if (haveCollision) {
       netDisplacement.normalise();
-      velocity *= CAR_VELOCITY_COLLISION_DECAY;
-      velocity -= netDisplacement * 1.3f * (netDisplacement.dotProduct(velocity));
+      velocity -= netDisplacement * 2.0f * (netDisplacement.dotProduct(velocity));
     }
+
+    return haveCollision;
   }
 
   void sampleEyes(Track *track) {
@@ -142,6 +177,7 @@ struct Car::CarImpl {
     Vector2 pixelRay = forward.rotated(EYE_FOV / 2.0f - FOV_PER_PIXEL / 2.0f);
     for (unsigned pi = 0; pi < PIXELS_PER_EYE; pi++) {
       ColorRGB avrgColor;
+      Vector2 avrgNormal;
       Vector2 avrgPosition;
       unsigned numSamples = 0;
 
@@ -149,8 +185,9 @@ struct Car::CarImpl {
       for (unsigned si = 0; si < SAMPLER_PER_PIXEL; si++) {
         Maybe<TrackRayIntersection> trackIntersection = track->IntersectRay(eyePos, sampleRay);
         if (trackIntersection.valid()) {
-          avrgColor += trackIntersection.val().color;
           avrgPosition += trackIntersection.val().pos;
+          avrgNormal += trackIntersection.val().normal;
+          avrgColor += trackIntersection.val().color;
           numSamples++;
         }
         sampleRay.rotate(-FOV_PER_SAMPLE);
@@ -159,7 +196,7 @@ struct Car::CarImpl {
       numSamples = std::max<unsigned>(1, numSamples);
       avrgColor *= 1.0f / static_cast<float>(numSamples);
       avrgPosition *= 1.0f / static_cast<float>(numSamples);
-      samplesOut.emplace_back(avrgPosition, avrgColor);
+      samplesOut.emplace_back(avrgPosition, avrgNormal, avrgColor);
 
       pixelRay.rotate(-FOV_PER_PIXEL);
     }

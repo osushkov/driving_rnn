@@ -13,25 +13,30 @@ struct TrackSpec {
   float trackMinWidth;
   float trackMaxWidth;
 
-  int numLinePoints;
+  unsigned numLinePoints;
+  unsigned colorPaletteSize;
   float maxModStrength;
 
-  TrackSpec(float radius, float trackMinWidth, float trackMaxWidth, int numLinePoints,
-            float maxModStrength)
+  TrackSpec(float radius, float trackMinWidth, float trackMaxWidth, unsigned numLinePoints,
+            unsigned colorPaletteSize, float maxModStrength)
       : radius(radius), trackMinWidth(trackMinWidth), trackMaxWidth(trackMaxWidth),
-        numLinePoints(numLinePoints), maxModStrength(maxModStrength) {
+        numLinePoints(numLinePoints), colorPaletteSize(colorPaletteSize),
+        maxModStrength(maxModStrength) {
 
     assert(radius > 0.0f);
     assert(trackMinWidth > 0.0f && trackMinWidth <= trackMaxWidth);
     assert(numLinePoints >= 3);
+    assert(colorPaletteSize >= 2);
   }
 };
 
 struct TrackRayIntersection {
   Vector2 pos;
+  Vector2 normal;
   ColorRGB color;
 
-  TrackRayIntersection(const Vector2 &pos, const ColorRGB &color) : pos(pos), color(color) {}
+  TrackRayIntersection(const Vector2 &pos, const Vector2 &normal, const ColorRGB &color)
+      : pos(pos), normal(normal), color(color) {}
 };
 
 class Track {
