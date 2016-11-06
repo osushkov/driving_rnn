@@ -4,6 +4,7 @@
 #include "../common/ColorRGB.hpp"
 #include "../common/Common.hpp"
 #include "../math/Math.hpp"
+#include "../math/Vector2.hpp"
 #include "Action.hpp"
 #include <array>
 #include <iosfwd>
@@ -18,10 +19,13 @@ class State {
 public:
   vector<double> sonar;
   float curProgress;
+  Vector2 relVelocity;
+  double forwardAngle;
 
   State();
   // State(const vector<ColorRGB> &leftEye, const vector<ColorRGB> &rightEye);
-  State(const vector<double> &sonar, float curProgress);
+  State(const vector<double> &sonar, float curProgress, const Vector2 &relVelocity,
+        double forwardAngle);
 
   bool operator==(const State &other) const;
 

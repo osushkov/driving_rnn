@@ -19,11 +19,11 @@ void updateMomentumAndRMS(CuMatrix gradient, CuMatrix momentum, CuMatrix rms,
   }
 
   float g = *Elem(gradient, row, col);
-  // float m = *Elem(momentum, row, col);
-  // float r = *Elem(rms, row, col);
+  float m = *Elem(momentum, row, col);
+  float r = *Elem(rms, row, col);
 
-  *Elem(momentum, row, col) = g; //m * beta1 + g * (1.0f - beta1);
-  //*Elem(rms, row, col) = r * beta2 + g * g * (1.0f - beta2);
+  *Elem(momentum, row, col) = m * beta1 + g * (1.0f - beta1);
+  *Elem(rms, row, col) = r * beta2 + g * g * (1.0f - beta2);
 }
 
 __global__
@@ -38,10 +38,10 @@ void updateWeightsWithAdam(CuMatrix weights, CuMatrix momentum, CuMatrix rms,
     return;
   }
 
-  float mc = *Elem(momentum, row, col);// / (1.0f - beta1);
-  // float rc = *Elem(rms, row, col) / (1.0f - beta2);
+  float mc = *Elem(momentum, row, col) / (1.0f - beta1);
+  float rc = *Elem(rms, row, col) / (1.0f - beta2);
 
-  *Elem(weights, row, col) -= lr * mc;// / sqrtf(rc + epsilon);
+  *Elem(weights, row, col) -= lr * mc / sqrtf(rc + epsilon);
 }
 
 void AdamKernel::UpdateMomentumAndRMS(const CuMatrix &gradient, const CuMatrix &momentum,

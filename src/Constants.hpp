@@ -15,7 +15,7 @@ static constexpr unsigned PIXELS_PER_EYE = 20;
 static constexpr unsigned SAMPLER_PER_PIXEL = 3;
 
 static constexpr float SONAR_FOV = 120.0f * static_cast<float>(M_PI) / 180.0f;
-static constexpr unsigned SONAR_PIXELS = 30;
+static constexpr unsigned SONAR_PIXELS = 10;
 static constexpr unsigned SAMPLES_PER_SONAR_PIXEL = 1;
 
 static constexpr float STEP_LENGTH_SECS = 1.0f / 20.0f;

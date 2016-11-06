@@ -14,8 +14,9 @@ State::State() {}
 //   assert(leftEye.size() == rightEye.size());
 // }
 
-State::State(const vector<double> &sonar, float curProgress)
-    : sonar(sonar), curProgress(curProgress) {}
+State::State(const vector<double> &sonar, float curProgress, const Vector2 &relVelocity,
+             double forwardAngle)
+    : sonar(sonar), curProgress(curProgress), relVelocity(relVelocity), forwardAngle(forwardAngle) {}
 
 bool State::operator==(const State &other) const {
   // if (leftEye.size() != other.leftEye.size()) {
@@ -41,7 +42,9 @@ bool State::operator==(const State &other) const {
   //   }
   // }
 
-  if (fabsf(curProgress - other.curProgress) > 0.0001f || sonar.size() != other.sonar.size()) {
+  if (fabsf(curProgress - other.curProgress) > 0.0001f || sonar.size() != other.sonar.size() ||
+      relVelocity.distnaceTo(other.relVelocity) > 0.0001f ||
+      fabsf(forwardAngle - other.forwardAngle) > 0.0001f) {
     return false;
   }
 
@@ -79,10 +82,13 @@ EVector State::Encode(void) const {
   // }
   //
   // assert(vi == result.rows());
-  EVector result(sonar.size() + 1);
+  EVector result(sonar.size() + 4);
   result(0) = curProgress;
+  result(1) = relVelocity.x;
+  result(2) = relVelocity.y;
+  result(3) = forwardAngle;
   for (unsigned i = 0; i < sonar.size(); i++) {
-    result(i + 1) = sonar[i];
+    result(i + 4) = sonar[i];
   }
   return result;
 }

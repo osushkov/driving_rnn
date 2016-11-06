@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
   cout << "learning agent start: " << Evaluator::Evaluate(learningAgent.get()) << endl;
 
   learning::Trainer trainer;
-  trainer.TrainAgent(learningAgent.get(), 1000000);
+  trainer.TrainAgent(learningAgent.get(), 20000);
 
   cout << "learning agent end: " << Evaluator::Evaluate(learningAgent.get()) << endl;
   getchar();
@@ -55,7 +55,13 @@ int main(int argc, char **argv) {
     // pair<vector<ColorRGB>, vector<ColorRGB>> eyeView =
     // world->GetCar()->EyeView(world->GetTrack());
     // State observedState(eyeView.first, eyeView.second);
-    State observedState(world->GetCar()->SonarView(world->GetTrack()), world->GetProgress());
+    Vector2 nextWaypoint = world->GetTrack()->NextWaypoint(world->GetCar()->GetPos());
+    Vector2 toNextWaypoint = (nextWaypoint - world->GetCar()->GetPos()).normalised();
+
+    State observedState(world->GetCar()->SonarView(world->GetTrack()),
+                        world->GetProgress(),
+                        world->GetCar()->RelVelocity(),
+                        world->GetCar()->RelHeading(toNextWaypoint));
     Action performedAction = agent->SelectAction(&observedState);
 
     world->GetCar()->SetAcceleration(performedAction.GetAcceleration());

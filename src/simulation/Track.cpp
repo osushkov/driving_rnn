@@ -77,6 +77,25 @@ struct Track::TrackImpl {
     return bestResult;
   }
 
+  Vector2 NextWaypoint(const Vector2 &point) const {
+    float minDistance = 0.0f;
+    Vector2 bestResult;
+
+    for (unsigned i = 0; i < trackLine.size(); i++) {
+      unsigned next = (i + 1) % trackLine.size();
+
+      std::pair<Vector2, float> psd =
+          Geometry::PointSegmentDist(point, trackLine[i], trackLine[next]);
+
+      if (i == 0 || psd.second < minDistance) {
+        minDistance = psd.second;
+        bestResult = trackLine[next]);
+      }
+    }
+
+    return bestResult;
+  }
+
   Maybe<TrackRayIntersection> IntersectRay(const Vector2 &start, const Vector2 &dir) const {
     CollisionLineSegment line(start, start + dir * trackMaxSize);
 
@@ -403,6 +422,10 @@ pair<Vector2, Vector2> Track::StartPosAndOrientation(void) const {
 
 float Track::DistanceAlongTrack(const Vector2 &point) const {
   return impl->DistanceAlongTrack(point);
+}
+
+Vector2 Track::NextWaypoint(const Vector2 &point) const {
+  return impl->NextWaypoint(point);
 }
 
 float Track::TrackLength(void) const { return impl->trackTotalLength; }

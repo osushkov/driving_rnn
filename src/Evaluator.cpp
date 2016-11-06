@@ -36,7 +36,13 @@ float Evaluator::Evaluate(Agent *agent) {
       // pair<vector<ColorRGB>, vector<ColorRGB>> eyeView =
       //     world->GetCar()->EyeView(world->GetTrack());
       // State observedState(eyeView.first, eyeView.second);
-      State observedState(world->GetCar()->SonarView(world->GetTrack()), world->GetProgress());
+      Vector2 nextWaypoint = world->GetTrack()->NextWaypoint(world->GetCar()->GetPos());
+      Vector2 toNextWaypoint = (nextWaypoint - world->GetCar()->GetPos()).normalised();
+
+      State observedState(world->GetCar()->SonarView(world->GetTrack()),
+                          world->GetProgress(),
+                          world->GetCar()->RelVelocity(),
+                          world->GetCar()->RelHeading(toNextWaypoint));
       Action performedAction = agent->SelectAction(&observedState);
 
       world->GetCar()->SetAcceleration(performedAction.GetAcceleration());

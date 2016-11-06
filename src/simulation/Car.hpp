@@ -35,6 +35,8 @@ public:
 
   Vector2 GetPos(void) const;
   float MaxSpeed(void) const;
+  Vector2 RelVelocity(void) const;
+  float RelHeading(const Vector2 &target) const;
 
   pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track);
   vector<double> SonarView(Track *track);

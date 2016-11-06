@@ -110,6 +110,17 @@ struct Car::CarImpl {
     return a * def.accelRate * STEP_LENGTH_SECS / (1.0f - a);
   }
 
+  Vector2 RelVelocity(void) const {
+    float angle = atan2f(forward.y, forward.x);
+    return velocity.rotated(-angle);
+  }
+
+  float RelHeading(const Vector2 &target) const {
+    float angle = atan2f(forward.y, forward.x);
+    Vector2 corrected = target.rotated(-angle);
+    return atan2f(corrected.y, corrected.x);
+  }
+
   void checkCollisions(float seconds, Track *track, const Vector2 &prevPos) {
     bool haveCollision = checkCollisionsRayMethod(seconds, track, prevPos);
     haveCollision |= checkCollisionsDisplacementMethod(seconds, track);
@@ -299,6 +310,10 @@ void Car::Update(float seconds, Track *track) { impl->Update(seconds, track); }
 Vector2 Car::GetPos(void) const { return impl->pos; }
 
 float Car::MaxSpeed(void) const { return impl->MaxSpeed(); }
+
+Vector2 Car::RelVelocity(void) const { return impl->RelVelocity(); }
+
+float Car::RelHeading(const Vector2 &target) const { return impl->RelHeading(target); }
 
 pair<vector<ColorRGB>, vector<ColorRGB>> Car::EyeView(Track *track) { return impl->EyeView(track); }
 
