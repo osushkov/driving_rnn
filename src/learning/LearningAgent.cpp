@@ -20,15 +20,15 @@ struct LearningAgent::LearningAgentImpl {
   uptr<rnn::RNN> network;
   unsigned itersSinceTargetUpdated = 0;
 
-  LearningAgentImpl() : pRandom(0.1f), temperature(0.1f) {
-    createNetwork();
+  LearningAgentImpl(unsigned inputDim) : pRandom(0.1f), temperature(0.1f) {
+    createNetwork(inputDim);
     itersSinceTargetUpdated = 0;
   }
 
-  void createNetwork(void) {
+  void createNetwork(unsigned inputDim) {
     rnn::RNNSpec spec;
 
-    spec.numInputs = 2;
+    spec.numInputs = inputDim;
     spec.numOutputs = Action::NUM_ACTIONS();
     spec.hiddenActivation = rnn::LayerActivation::TANH;
     spec.outputActivation = rnn::LayerActivation::LINEAR;
@@ -36,23 +36,20 @@ struct LearningAgent::LearningAgentImpl {
     spec.maxBatchSize = EXPERIENCE_BATCH_SIZE;
     spec.maxTraceLength = EXPERIENCE_MAX_TRACE_LENGTH;
 
-    // Connect layer 1 to the input.
+    // Forward connections
     spec.connections.emplace_back(0, 1, 0);
-
-    // Connection layer 1 to layer 2, layer 2 to the output layer.
     spec.connections.emplace_back(1, 2, 0);
     spec.connections.emplace_back(2, 3, 0);
     // spec.connections.emplace_back(3, 4, 0);
 
-    // Recurrent self-connections for layers 1 and 2.
-    // spec.connections.emplace_back(1, 1, 1);
+    // Recurrent connections
     spec.connections.emplace_back(2, 2, 1);
-    // spec.connections.emplace_back(2, 1, 1);
+    // spec.connections.emplace_back(1, 1, 1);
 
-    // 2 layers, 1 hidden.
-    spec.layers.emplace_back(1, 64, false);
-    spec.layers.emplace_back(2, 64, false);
-    // spec.layers.emplace_back(3, 64, false);
+    // Layer defs
+    spec.layers.emplace_back(1, 128, false);
+    spec.layers.emplace_back(2, 128, false);
+    // spec.layers.emplace_back(3, 32, false);
     spec.layers.emplace_back(3, spec.numOutputs, true);
 
     network = make_unique<rnn::RNN>(spec);
@@ -87,8 +84,8 @@ struct LearningAgent::LearningAgentImpl {
     if (math::RandInterval(0.0, 1.0) < pRandom) {
       return chooseExplorativeAction(state);
     } else {
-      // return chooseWeightedAction(state);
-      return chooseBestAction(state, false);
+      return chooseWeightedAction(state);
+      // return chooseBestAction(state, false);
     }
   }
 
@@ -199,7 +196,7 @@ struct LearningAgent::LearningAgentImpl {
   }
 };
 
-LearningAgent::LearningAgent() : impl(new LearningAgentImpl()) {}
+LearningAgent::LearningAgent(unsigned inputDim) : impl(new LearningAgentImpl(inputDim)) {}
 LearningAgent::~LearningAgent() = default;
 
 Action LearningAgent::SelectAction(const State *state) { return impl->SelectAction(state); }

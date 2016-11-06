@@ -22,7 +22,7 @@ using namespace rnn::cuda;
 
 constexpr float ADAM_BETA1 = 0.9f;
 constexpr float ADAM_BETA2 = 0.999f;
-constexpr float ADAM_LR = 0.0005f;
+constexpr float ADAM_LR = 0.001f;
 constexpr float ADAM_EPSILON = 10e-8;
 
 enum class TrainTask {

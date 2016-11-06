@@ -9,7 +9,50 @@ using namespace simulation;
 
 State::State() {}
 
-bool State::operator==(const State &other) const { return true; }
+// State::State(const vector<ColorRGB> &leftEye, const vector<ColorRGB> &rightEye)
+//     : leftEye(leftEye), rightEye(rightEye) {
+//   assert(leftEye.size() == rightEye.size());
+// }
+
+State::State(const vector<double> &sonar, float curProgress)
+    : sonar(sonar), curProgress(curProgress) {}
+
+bool State::operator==(const State &other) const {
+  // if (leftEye.size() != other.leftEye.size()) {
+  //   return false;
+  // }
+  // if (rightEye.size() != other.rightEye.size()) {
+  //   return false;
+  // }
+  //
+  // for (unsigned i = 0; i < leftEye.size(); i++) {
+  //   if (fabsf(leftEye[i].r - other.leftEye[i].r) > 0.0001f ||
+  //       fabsf(leftEye[i].g - other.leftEye[i].g) > 0.0001f ||
+  //       fabsf(leftEye[i].b - other.leftEye[i].b) > 0.0001f) {
+  //     return false;
+  //   }
+  // }
+  //
+  // for (unsigned i = 0; i < rightEye.size(); i++) {
+  //   if (fabsf(rightEye[i].r - other.rightEye[i].r) > 0.0001f ||
+  //       fabsf(rightEye[i].g - other.rightEye[i].g) > 0.0001f ||
+  //       fabsf(rightEye[i].b - other.rightEye[i].b) > 0.0001f) {
+  //     return false;
+  //   }
+  // }
+
+  if (fabsf(curProgress - other.curProgress) > 0.0001f || sonar.size() != other.sonar.size()) {
+    return false;
+  }
+
+  for (unsigned i = 0; i < sonar.size(); i++) {
+    if (fabsf(sonar[i] - other.sonar[i]) > 0.0001f) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 vector<unsigned> State::AvailableActions(void) const {
   vector<unsigned> result(Action::NUM_ACTIONS());
@@ -20,8 +63,35 @@ vector<unsigned> State::AvailableActions(void) const {
 }
 
 EVector State::Encode(void) const {
-  EVector result(1);
+  // EVector result(leftEye.size() * 3 + rightEye.size() * 3);
+  //
+  // unsigned vi = 0;
+  // for (const auto &c : leftEye) {
+  //   result(vi++) = c.r;
+  //   result(vi++) = c.g;
+  //   result(vi++) = c.b;
+  // }
+  //
+  // for (const auto &c : rightEye) {
+  //   result(vi++) = c.r;
+  //   result(vi++) = c.g;
+  //   result(vi++) = c.b;
+  // }
+  //
+  // assert(vi == result.rows());
+  EVector result(sonar.size() + 1);
+  result(0) = curProgress;
+  for (unsigned i = 0; i < sonar.size(); i++) {
+    result(i + 1) = sonar[i];
+  }
   return result;
 }
 
-std::ostream &operator<<(std::ostream &stream, const simulation::State &gs) { return stream; }
+std::ostream &operator<<(std::ostream &stream, const simulation::State &gs) {
+  stream << gs.curProgress << endl;
+  for (const auto &s : gs.sonar) {
+    stream << s << " ";
+  }
+  stream << endl;
+  return stream;
+}

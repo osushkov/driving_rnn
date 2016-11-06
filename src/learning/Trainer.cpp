@@ -19,7 +19,7 @@
 
 using namespace learning;
 
-static constexpr unsigned EXPERIENCE_MEMORY_SIZE = 100000;
+static constexpr unsigned EXPERIENCE_MEMORY_SIZE = 500;
 
 static constexpr float INITIAL_PRANDOM = 0.9f;
 static constexpr float TARGET_PRANDOM = 0.1f;
@@ -69,6 +69,7 @@ struct Trainer::TrainerImpl {
         agent->SetTemperature(temp);
 
         memory->AddExperience(generator->GenerateExperience(agent));
+        // cout << memory->occupancy << endl;
         // cout << "experiences generated: " << memory->NumMemories() << endl;
       }
     });

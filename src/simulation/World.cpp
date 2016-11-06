@@ -6,9 +6,15 @@ struct World::WorldImpl {
   sptr<Track> track;
   uptr<Car> car;
 
+  float prevProgress = 0.0f;
+  float curProgress = 0.0f;
+
   WorldImpl(const sptr<Track> &track, const CarDef &carDef) : track(track) {
     auto startState = track->StartPosAndOrientation();
     car = make_unique<Car>(carDef, startState.first, startState.second);
+
+    curProgress = track->DistanceAlongTrack(car->GetPos());
+    prevProgress = prevProgress;
   }
 
   void Render(renderer::Renderer *renderer) const {
@@ -23,15 +29,29 @@ struct World::WorldImpl {
       renderer->DrawHUDCircle(Vector2(-0.75f + i * pixelSize, -0.9f), pixelSize / 2.0f,
                               eyeView.first[i]);
     }
-    for (int i = 0; i < eyeView.second.size(); i++) {
+    for (unsigned i = 0; i < eyeView.second.size(); i++) {
       renderer->DrawHUDCircle(Vector2(0.75f + -pixelBarSize + i * pixelSize, -0.9f),
                               pixelSize / 2.0f, eyeView.second[i]);
     }
   }
 
-  void Update(float seconds) { car->Update(seconds, track.get()); }
+  float Update(float seconds) {
+    car->Update(seconds, track.get());
+    prevProgress = curProgress;
+    curProgress = track->DistanceAlongTrack(car->GetPos());
 
-  Car *GetCar(void) { return car.get(); }
+    float progressScale = car->MaxSpeed() * seconds * 2.0f;
+
+    if (fabsf(curProgress - prevProgress) > track->TrackLength() / 2.0f) {
+      if (curProgress < prevProgress) {
+        return (curProgress - prevProgress + track->TrackLength()) * progressScale;
+      } else {
+        return (curProgress - prevProgress - track->TrackLength()) * progressScale;
+      }
+    } else {
+      return (curProgress - prevProgress) * progressScale;
+    }
+  }
 };
 
 World::World(const sptr<Track> &track, const CarDef &carDef) : impl(new WorldImpl(track, carDef)) {}
@@ -39,6 +59,9 @@ World::~World() = default;
 
 void World::Render(renderer::Renderer *renderer) const { impl->Render(renderer); }
 
-void World::Update(float seconds) { impl->Update(seconds); }
+float World::Update(float seconds) { return impl->Update(seconds); }
 
-Car *World::GetCar(void) { return impl->GetCar(); }
+float World::GetProgress(void) { return impl->curProgress / impl->track->TrackLength(); }
+
+Car *World::GetCar(void) { return impl->car.get(); }
+Track *World::GetTrack(void) { return impl->track.get(); }

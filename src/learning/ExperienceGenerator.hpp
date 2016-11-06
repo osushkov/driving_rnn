@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../common/Common.hpp"
-#include "LearningAgent.hpp"
 #include "Experience.hpp"
+#include "LearningAgent.hpp"
 #include <vector>
 
 namespace learning {

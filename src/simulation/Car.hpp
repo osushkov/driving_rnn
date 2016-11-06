@@ -34,8 +34,10 @@ public:
   void Update(float seconds, Track *track);
 
   Vector2 GetPos(void) const;
+  float MaxSpeed(void) const;
 
   pair<vector<ColorRGB>, vector<ColorRGB>> EyeView(Track *track);
+  vector<double> SonarView(Track *track);
 
 private:
   struct CarImpl;

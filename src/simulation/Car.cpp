@@ -1,5 +1,6 @@
 
 #include "Car.hpp"
+#include "../Constants.hpp"
 #include "../math/Geometry.hpp"
 #include "../math/Math.hpp"
 #include <cmath>
@@ -11,14 +12,12 @@ static const ColorRGB CAR_ARROW_COLOR = ColorRGB::White();
 static const ColorRGB CAR_ACCEL_COLOR = ColorRGB::Red();
 static const ColorRGB CAR_TURN_COLOR = ColorRGB::Green();
 
-static constexpr float CAR_VELOCITY_DECAY = 0.9f; // per second
-static constexpr float CAR_VELOCITY_COLLISION_DECAY = 0.3f;
-
-static constexpr float EYE_FOV = 90.0f * static_cast<float>(M_PI) / 180.0f;
-static constexpr unsigned PIXELS_PER_EYE = 15;
-static constexpr unsigned SAMPLER_PER_PIXEL = 5;
 static constexpr float FOV_PER_PIXEL = EYE_FOV / static_cast<float>(PIXELS_PER_EYE);
 static constexpr float FOV_PER_SAMPLE = FOV_PER_PIXEL / static_cast<float>(SAMPLER_PER_PIXEL);
+
+static constexpr float FOV_PER_SONAR_PIXEL = SONAR_FOV / static_cast<float>(SONAR_PIXELS);
+static constexpr float FOV_PER_SONAR_SAMPLE =
+    FOV_PER_SONAR_PIXEL / static_cast<float>(SAMPLES_PER_SONAR_PIXEL);
 
 struct Car::CarImpl {
   CarDef def;
@@ -34,6 +33,7 @@ struct Car::CarImpl {
 
   pair<Vector2, vector<TrackRayIntersection>> leftEyeRays;
   pair<Vector2, vector<TrackRayIntersection>> rightEyeRays;
+  pair<Vector2, vector<TrackRayIntersection>> sonarRays;
 
   CarImpl(const CarDef &def, Vector2 startPos, Vector2 startOrientation)
       : def(def), pos(startPos), velocity(0.0f, 0.0f), forward(startOrientation), turnFrac(0.0f),
@@ -43,15 +43,19 @@ struct Car::CarImpl {
 
   void Render(renderer::Renderer *renderer) const {
     // Draw the eye rays.
-    float fade = 0.2f;
-    for (const auto &ler : leftEyeRays.second) {
-      renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
-                         make_pair(ler.pos, ler.color * fade));
-    }
-    for (const auto &rer : rightEyeRays.second) {
-      renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
-                         make_pair(rer.pos, rer.color * fade));
-    }
+    // float fade = 0.2f;
+    // for (const auto &ler : leftEyeRays.second) {
+    //   renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
+    //                      make_pair(ler.pos, ler.color * fade));
+    // }
+    // for (const auto &rer : rightEyeRays.second) {
+    //   renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
+    //                      make_pair(rer.pos, rer.color * fade));
+    // }
+    // for (const auto &sr : sonarRays.second) {
+    //   renderer->DrawLine(make_pair(sonarRays.first, ColorRGB::White()),
+    //                      make_pair(sr.pos, ColorRGB::White()));
+    // }
 
     renderer->DrawCircle(pos, def.size / 2.0f, CAR_CIRCLE_COLOR);
 
@@ -94,7 +98,16 @@ struct Car::CarImpl {
     pos += velocity * seconds;
 
     checkCollisions(seconds, track, prevPos);
-    sampleEyes(track);
+
+    // sonarRays.first = pos;
+    // sonarRays.second.clear();
+    // sampleFromSonarPosition(track, pos, sonarRays.second);
+    // sampleEyes(track);
+  }
+
+  float MaxSpeed(void) const {
+    const float a = powf(CAR_VELOCITY_DECAY, STEP_LENGTH_SECS);
+    return a * def.accelRate * STEP_LENGTH_SECS / (1.0f - a);
   }
 
   void checkCollisions(float seconds, Track *track, const Vector2 &prevPos) {
@@ -152,7 +165,7 @@ struct Car::CarImpl {
       haveCollision = true;
     }
 
-    if (haveCollision) {
+    if (haveCollision && netDisplacement.length2() > Geometry::EPSILON) {
       netDisplacement.normalise();
       velocity -= netDisplacement * 2.0f * (netDisplacement.dotProduct(velocity));
     }
@@ -168,6 +181,10 @@ struct Car::CarImpl {
     rightEyeRays.first = pos - left * (def.eyeSeparation / 2.0f);
     rightEyeRays.second.clear();
     sampleFromEyePosition(track, rightEyeRays.first, rightEyeRays.second);
+
+    sonarRays.first = pos;
+    sonarRays.second.clear();
+    sampleFromSonarPosition(track, pos, sonarRays.second);
   }
 
   void sampleFromEyePosition(Track *track, const Vector2 &eyePos,
@@ -217,6 +234,53 @@ struct Car::CarImpl {
     }
     return result;
   }
+
+  vector<double> SonarView(Track *track) {
+    vector<TrackRayIntersection> samples;
+    sampleFromSonarPosition(track, pos, samples);
+
+    vector<double> result;
+    result.reserve(samples.size());
+
+    for (const auto &s : samples) {
+      result.push_back(std::min(10.0f, s.pos.distanceTo(pos)) / 10.0f);
+    }
+
+    return result;
+  }
+
+  void sampleFromSonarPosition(Track *track, const Vector2 &eyePos,
+                               vector<TrackRayIntersection> &samplesOut) {
+    assert(samplesOut.empty());
+
+    Vector2 pixelRay = forward.rotated(SONAR_FOV / 2.0f - FOV_PER_SONAR_PIXEL / 2.0f);
+    for (unsigned pi = 0; pi < SONAR_PIXELS; pi++) {
+      ColorRGB avrgColor;
+      Vector2 avrgNormal;
+      Vector2 avrgPosition;
+      unsigned numSamples = 0;
+
+      Vector2 sampleRay =
+          pixelRay.rotated(FOV_PER_SONAR_PIXEL / 2.0f - FOV_PER_SONAR_SAMPLE / 2.0f);
+      for (unsigned si = 0; si < SAMPLES_PER_SONAR_PIXEL; si++) {
+        Maybe<TrackRayIntersection> trackIntersection = track->IntersectRay(eyePos, sampleRay);
+        if (trackIntersection.valid()) {
+          avrgPosition += trackIntersection.val().pos;
+          avrgNormal += trackIntersection.val().normal;
+          avrgColor += trackIntersection.val().color;
+          numSamples++;
+        }
+        sampleRay.rotate(-FOV_PER_SONAR_SAMPLE);
+      }
+
+      numSamples = std::max<unsigned>(1, numSamples);
+      avrgColor *= 1.0f / static_cast<float>(numSamples);
+      avrgPosition *= 1.0f / static_cast<float>(numSamples);
+      samplesOut.emplace_back(avrgPosition, avrgNormal, avrgColor);
+
+      pixelRay.rotate(-FOV_PER_SONAR_PIXEL);
+    }
+  }
 };
 
 Car::Car(const CarDef &def, Vector2 startPos, Vector2 startOrientation)
@@ -234,4 +298,8 @@ void Car::Update(float seconds, Track *track) { impl->Update(seconds, track); }
 
 Vector2 Car::GetPos(void) const { return impl->pos; }
 
+float Car::MaxSpeed(void) const { return impl->MaxSpeed(); }
+
 pair<vector<ColorRGB>, vector<ColorRGB>> Car::EyeView(Track *track) { return impl->EyeView(track); }
+
+vector<double> Car::SonarView(Track *track) { return impl->SonarView(track); }

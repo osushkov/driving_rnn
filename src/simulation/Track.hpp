@@ -49,6 +49,7 @@ public:
   pair<Vector2, Vector2> StartPosAndOrientation(void) const;
 
   float DistanceAlongTrack(const Vector2 &point) const;
+  float TrackLength(void) const;
 
   Maybe<TrackRayIntersection> IntersectRay(const Vector2 &start, const Vector2 &dir) const;
   vector<CollisionResult> IntersectSphere(const Vector2 &pos, float radius) const;

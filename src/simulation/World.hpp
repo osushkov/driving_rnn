@@ -14,8 +14,11 @@ public:
 
   void Render(renderer::Renderer *renderer) const;
 
-  void Update(float seconds);
-  Car* GetCar(void);
+  float Update(float seconds);
+  float GetProgress(void);
+
+  Car *GetCar(void);
+  Track *GetTrack(void);
 
 private:
   struct WorldImpl;

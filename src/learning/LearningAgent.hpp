@@ -14,7 +14,7 @@ namespace learning {
 
 class LearningAgent : public Agent {
 public:
-  LearningAgent();
+  LearningAgent(unsigned inputDim);
   virtual ~LearningAgent();
 
   Action SelectAction(const State *state) override;

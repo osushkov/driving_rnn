@@ -31,16 +31,10 @@ struct Track::TrackImpl {
   float trackTotalLength;
   float trackMaxSize;
 
-  Vector2 startPos;
-  Vector2 startOrientation;
-
   TrackImpl(const TrackSpec &spec) {
     generateWallsPalette(spec);
     generateTrackLine(spec);
     generateWalls(spec);
-
-    startPos = trackLine[0];
-    startOrientation = (trackLine[1] - startPos).normalised();
   }
 
   void Render(renderer::Renderer *renderer) const {
@@ -51,6 +45,12 @@ struct Track::TrackImpl {
   }
 
   pair<Vector2, Vector2> StartPosAndOrientation(void) const {
+    unsigned si = rand() % trackLine.size();
+    unsigned ni = (si + 1) % trackLine.size();
+
+    Vector2 startPos = trackLine[si];
+    Vector2 startOrientation = (trackLine[ni] - startPos).normalised();
+
     return make_pair(startPos, startOrientation);
   }
 
@@ -132,14 +132,22 @@ struct Track::TrackImpl {
 
   void generateWallsPalette(const TrackSpec &spec) {
     const float minChannelVal = 0.2f;
-    for (unsigned i = 0; i < spec.colorPaletteSize; i++) {
-      leftWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
-                                   math::RandInterval(minChannelVal, 1.0f),
-                                   math::RandInterval(minChannelVal, 1.0f));
-      rightWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
-                                    math::RandInterval(minChannelVal, 1.0f),
-                                    math::RandInterval(minChannelVal, 1.0f));
-    }
+    leftWallPalette.emplace_back(ColorRGB(1.0f, 0.0f, 0.0f));
+    leftWallPalette.emplace_back(ColorRGB(0.0f, 1.0f, 0.0f));
+    leftWallPalette.emplace_back(ColorRGB(1.0f, 1.0f, 1.0f));
+
+    rightWallPalette.emplace_back(ColorRGB(0.0f, 0.0f, 1.0f));
+    rightWallPalette.emplace_back(ColorRGB(1.0f, 1.0f, 0.0f));
+    rightWallPalette.emplace_back(ColorRGB(1.0f, 0.0f, 0.0f));
+
+    // for (unsigned i = 0; i < spec.colorPaletteSize; i++) {
+    //   leftWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
+    //                                math::RandInterval(minChannelVal, 1.0f),
+    //                                math::RandInterval(minChannelVal, 1.0f));
+    //   rightWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
+    //                                 math::RandInterval(minChannelVal, 1.0f),
+    //                                 math::RandInterval(minChannelVal, 1.0f));
+    // }
   }
 
   bool generateTrackLine(const TrackSpec &spec) {
@@ -396,6 +404,8 @@ pair<Vector2, Vector2> Track::StartPosAndOrientation(void) const {
 float Track::DistanceAlongTrack(const Vector2 &point) const {
   return impl->DistanceAlongTrack(point);
 }
+
+float Track::TrackLength(void) const { return impl->trackTotalLength; }
 
 Maybe<TrackRayIntersection> Track::IntersectRay(const Vector2 &start, const Vector2 &dir) const {
   return impl->IntersectRay(start, dir);
