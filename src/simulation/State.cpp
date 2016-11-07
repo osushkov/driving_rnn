@@ -70,30 +70,30 @@ vector<unsigned> State::AvailableActions(void) const {
 }
 
 EVector State::Encode(void) const {
-  EVector result(leftEye.size() * 3 * 2 + 1);
-  result(0) = fabsf(forwardAngle) > (static_cast<float>(M_PI) / 2.0f) ? -1.0f : 1.0f;
-
-  unsigned vi = 1;
-  for (const auto &c : leftEye) {
-    result(vi++) = c.r;
-    result(vi++) = c.g;
-    result(vi++) = c.b;
-  }
-
-  for (const auto &c : rightEye) {
-    result(vi++) = c.r;
-    result(vi++) = c.g;
-    result(vi++) = c.b;
-  }
-
-  // EVector result(sonar.size() + 1);
-  // // result(0) = curProgress;
-  // // result(1) = relVelocity.x;
-  // // result(2) = relVelocity.y;
+  // EVector result(leftEye.size() * 3 * 2 + 1);
   // result(0) = fabsf(forwardAngle) > (static_cast<float>(M_PI) / 2.0f) ? -1.0f : 1.0f;
-  // for (unsigned i = 0; i < sonar.size(); i++) {
-  //   result(i + 1) = sonar[i];
+  //
+  // unsigned vi = 1;
+  // for (const auto &c : leftEye) {
+  //   result(vi++) = c.r;
+  //   result(vi++) = c.g;
+  //   result(vi++) = c.b;
   // }
+  //
+  // for (const auto &c : rightEye) {
+  //   result(vi++) = c.r;
+  //   result(vi++) = c.g;
+  //   result(vi++) = c.b;
+  // }
+
+  EVector result(sonar.size() + 1);
+  // result(0) = curProgress;
+  // result(1) = relVelocity.x;
+  // result(2) = relVelocity.y;
+  result(0) = fabsf(forwardAngle) > (static_cast<float>(M_PI) / 2.0f) ? -1.0f : 1.0f;
+  for (unsigned i = 0; i < sonar.size(); i++) {
+    result(i + 1) = sonar[i];
+  }
   return result;
 }
 

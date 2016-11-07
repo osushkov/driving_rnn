@@ -29,14 +29,13 @@ int main(int argc, char **argv) {
   // cout << "random agent: " << Evaluator::Evaluate(randomAgent.get()) << endl;
 
   uptr<learning::LearningAgent> learningAgent =
-      make_unique<learning::LearningAgent>(PIXELS_PER_EYE * 2 * 3 + 1); // PIXELS_PER_EYE * 2 * 3);
+      make_unique<learning::LearningAgent>(SONAR_PIXELS + 1); // PIXELS_PER_EYE * 2 * 3);
   cout << "learning agent start: " << Evaluator::Evaluate(learningAgent.get()) << endl;
 
   learning::Trainer trainer;
-  trainer.TrainAgent(learningAgent.get(), 50000);
+  trainer.TrainAgent(learningAgent.get(), 500000);
 
   cout << "learning agent end: " << Evaluator::Evaluate(learningAgent.get()) << endl;
-  getchar();
 
   uptr<SFMLRenderer> renderer = make_unique<SFMLRenderer>(800, 800, "Hello world");
   sptr<Track> track =
@@ -51,16 +50,19 @@ int main(int argc, char **argv) {
   float lastFrameTime = timer.GetElapsedSeconds();
 
   learning::LearningAgent *agent = learningAgent.get();
+  unsigned iter = 0;
   while (true) {
-    pair<vector<ColorRGB>, vector<ColorRGB>> eyeView =
-        world->GetCar()->EyeView(world->GetTrack());
+    if (iter == 0) {
+      getchar();
+    }
+    iter++;
+    pair<vector<ColorRGB>, vector<ColorRGB>> eyeView = world->GetCar()->EyeView(world->GetTrack());
     // State observedState(eyeView.first, eyeView.second);
     Vector2 nextWaypoint = world->GetTrack()->NextWaypoint(world->GetCar()->GetPos());
     Vector2 toNextWaypoint = (nextWaypoint - world->GetCar()->GetPos()).normalised();
 
     State observedState(eyeView.first, eyeView.second,
-                        world->GetCar()->SonarView(world->GetTrack()),
-                        world->GetProgress(),
+                        world->GetCar()->SonarView(world->GetTrack()), world->GetProgress(),
                         world->GetCar()->RelVelocity(),
                         world->GetCar()->RelHeading(toNextWaypoint));
     Action performedAction = agent->SelectAction(&observedState);

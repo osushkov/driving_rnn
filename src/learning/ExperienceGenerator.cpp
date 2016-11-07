@@ -11,7 +11,7 @@
 using namespace learning;
 using namespace simulation;
 
-static constexpr unsigned NUM_TRACKS = 10;
+static constexpr unsigned NUM_TRACKS = 100;
 static constexpr unsigned MAX_TRACE_LENGTH = 50;
 
 struct ExperienceGenerator::ExperienceGeneratorImpl {
@@ -45,13 +45,12 @@ struct ExperienceGenerator::ExperienceGeneratorImpl {
       Vector2 toNextWaypoint = (nextWaypoint - world->GetCar()->GetPos()).normalised();
 
       State observedState(eyeView.first, eyeView.second,
-                          world->GetCar()->SonarView(world->GetTrack()),
-                          world->GetProgress(),
+                          world->GetCar()->SonarView(world->GetTrack()), world->GetProgress(),
                           world->GetCar()->RelVelocity(),
                           world->GetCar()->RelHeading(toNextWaypoint));
 
       // if (i == 0) {
-        // cout << observedState << endl;
+      // cout << observedState << endl;
 
       // }
       Action performedAction = agent->SelectLearningAction(&observedState);
