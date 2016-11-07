@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
   cout << "learning agent start: " << Evaluator::Evaluate(learningAgent.get()) << endl;
 
   learning::Trainer trainer;
-  trainer.TrainAgent(learningAgent.get(), 20000);
+  trainer.TrainAgent(learningAgent.get(), 50000);
 
   cout << "learning agent end: " << Evaluator::Evaluate(learningAgent.get()) << endl;
   getchar();
@@ -88,7 +88,6 @@ int main(int argc, char **argv) {
 
       lastFrameTime = timer.GetElapsedSeconds();
       double r = world->Update(STEP_LENGTH_SECS);
-      cout << "reward: " << r << endl;
 
       renderer->Focus(world->GetCar()->GetPos(), 20.0f);
       world->Render(renderer.get());

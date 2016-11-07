@@ -78,7 +78,7 @@ struct Track::TrackImpl {
   }
 
   Vector2 NextWaypoint(const Vector2 &point) const {
-    float minDistance = 0.0f;
+    float minDistance = 100000.0f;
     Vector2 bestResult;
 
     for (unsigned i = 0; i < trackLine.size(); i++) {
@@ -87,9 +87,9 @@ struct Track::TrackImpl {
       std::pair<Vector2, float> psd =
           Geometry::PointSegmentDist(point, trackLine[i], trackLine[next]);
 
-      if (i == 0 || psd.second < minDistance) {
+      if (psd.second < minDistance && trackLine[next].distanceTo2(point) > Geometry::EPSILON) {
         minDistance = psd.second;
-        bestResult = trackLine[next]);
+        bestResult = trackLine[next];
       }
     }
 

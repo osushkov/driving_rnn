@@ -48,10 +48,14 @@ struct ExperienceGenerator::ExperienceGeneratorImpl {
                           world->GetProgress(),
                           world->GetCar()->RelVelocity(),
                           world->GetCar()->RelHeading(toNextWaypoint));
-      // cout << observedState << endl;
-      // getchar();
-      Action performedAction = agent->SelectLearningAction(&observedState);
 
+      // if (i == 0) {
+        // cout << observedState << endl;
+
+      // }
+      Action performedAction = agent->SelectLearningAction(&observedState);
+      // cout << performedAction << endl;
+      // getchar();
       world->GetCar()->SetAcceleration(performedAction.GetAcceleration());
       world->GetCar()->SetTurn(performedAction.GetTurn());
 

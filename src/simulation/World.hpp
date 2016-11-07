@@ -14,7 +14,7 @@ public:
 
   void Render(renderer::Renderer *renderer) const;
 
-  void Update(float seconds);
+  float Update(float seconds);
 
   float GetProgress(void);
   Car* GetCar(void);

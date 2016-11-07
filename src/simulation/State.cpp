@@ -43,7 +43,7 @@ bool State::operator==(const State &other) const {
   // }
 
   if (fabsf(curProgress - other.curProgress) > 0.0001f || sonar.size() != other.sonar.size() ||
-      relVelocity.distnaceTo(other.relVelocity) > 0.0001f ||
+      relVelocity.distanceTo(other.relVelocity) > 0.0001f ||
       fabsf(forwardAngle - other.forwardAngle) > 0.0001f) {
     return false;
   }
@@ -82,22 +82,24 @@ EVector State::Encode(void) const {
   // }
   //
   // assert(vi == result.rows());
-  EVector result(sonar.size() + 4);
-  result(0) = curProgress;
-  result(1) = relVelocity.x;
-  result(2) = relVelocity.y;
-  result(3) = forwardAngle;
+  EVector result(sonar.size() + 1);
+  // result(0) = curProgress;
+  // result(1) = relVelocity.x;
+  // result(2) = relVelocity.y;
+  result(0) = fabsf(forwardAngle) > (static_cast<float>(M_PI) / 2.0f) ? -1.0f : 1.0f;
   for (unsigned i = 0; i < sonar.size(); i++) {
-    result(i + 4) = sonar[i];
+    result(i + 1) = sonar[i];
   }
   return result;
 }
 
 std::ostream &operator<<(std::ostream &stream, const simulation::State &gs) {
   stream << gs.curProgress << endl;
-  for (const auto &s : gs.sonar) {
-    stream << s << " ";
-  }
-  stream << endl;
+  stream << gs.relVelocity << endl;
+  stream << gs.forwardAngle << endl;
+  // for (const auto &s : gs.sonar) {
+  //   stream << s << " ";
+  // }
+  // stream << endl;
   return stream;
 }
