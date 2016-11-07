@@ -4,6 +4,7 @@
 
 static constexpr float CAR_SIZE = 0.5f;
 static constexpr float CAR_EYE_SEPARATION = 0.45f;
+static constexpr float CAR_EYE_ROTATION = 15.0f * static_cast<float>(M_PI) / 180.0f;
 static constexpr float CAR_TURN_RATE = 180.0f * static_cast<float>(M_PI) / 180.0f;
 static constexpr float CAR_ACCEL_RATE = 3.0f;
 

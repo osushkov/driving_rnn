@@ -43,15 +43,15 @@ struct Car::CarImpl {
 
   void Render(renderer::Renderer *renderer) const {
     // Draw the eye rays.
-    // float fade = 0.2f;
-    // for (const auto &ler : leftEyeRays.second) {
-    //   renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
-    //                      make_pair(ler.pos, ler.color * fade));
-    // }
-    // for (const auto &rer : rightEyeRays.second) {
-    //   renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
-    //                      make_pair(rer.pos, rer.color * fade));
-    // }
+    float fade = 0.2f;
+    for (const auto &ler : leftEyeRays.second) {
+      renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
+                         make_pair(ler.pos, ler.color * fade));
+    }
+    for (const auto &rer : rightEyeRays.second) {
+      renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
+                         make_pair(rer.pos, rer.color * fade));
+    }
     // for (const auto &sr : sonarRays.second) {
     //   renderer->DrawLine(make_pair(sonarRays.first, ColorRGB::White()),
     //                      make_pair(sr.pos, ColorRGB::White()));
@@ -187,22 +187,23 @@ struct Car::CarImpl {
   void sampleEyes(Track *track) {
     leftEyeRays.first = pos + left * (def.eyeSeparation / 2.0f);
     leftEyeRays.second.clear();
-    sampleFromEyePosition(track, leftEyeRays.first, leftEyeRays.second);
+    sampleFromEyePosition(track, CAR_EYE_ROTATION, leftEyeRays.first, leftEyeRays.second);
 
     rightEyeRays.first = pos - left * (def.eyeSeparation / 2.0f);
     rightEyeRays.second.clear();
-    sampleFromEyePosition(track, rightEyeRays.first, rightEyeRays.second);
+    sampleFromEyePosition(track, -CAR_EYE_ROTATION, rightEyeRays.first, rightEyeRays.second);
 
     sonarRays.first = pos;
     sonarRays.second.clear();
     sampleFromSonarPosition(track, pos, sonarRays.second);
   }
 
-  void sampleFromEyePosition(Track *track, const Vector2 &eyePos,
+  void sampleFromEyePosition(Track *track, float forwardRot, const Vector2 &eyePos,
                              vector<TrackRayIntersection> &samplesOut) {
     assert(samplesOut.empty());
 
-    Vector2 pixelRay = forward.rotated(EYE_FOV / 2.0f - FOV_PER_PIXEL / 2.0f);
+    Vector2 rForward = forward.rotated(forwardRot);
+    Vector2 pixelRay = rForward.rotated(EYE_FOV / 2.0f - FOV_PER_PIXEL / 2.0f);
     for (unsigned pi = 0; pi < PIXELS_PER_EYE; pi++) {
       ColorRGB avrgColor;
       Vector2 avrgNormal;
