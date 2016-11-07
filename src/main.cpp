@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
   // cout << "random agent: " << Evaluator::Evaluate(randomAgent.get()) << endl;
 
   uptr<learning::LearningAgent> learningAgent =
-      make_unique<learning::LearningAgent>(SONAR_PIXELS + 1); // PIXELS_PER_EYE * 2 * 3);
+      make_unique<learning::LearningAgent>(PIXELS_PER_EYE * 2 * 3 + 1); // PIXELS_PER_EYE * 2 * 3);
   cout << "learning agent start: " << Evaluator::Evaluate(learningAgent.get()) << endl;
 
   learning::Trainer trainer;
@@ -52,13 +52,14 @@ int main(int argc, char **argv) {
 
   learning::LearningAgent *agent = learningAgent.get();
   while (true) {
-    // pair<vector<ColorRGB>, vector<ColorRGB>> eyeView =
-    // world->GetCar()->EyeView(world->GetTrack());
+    pair<vector<ColorRGB>, vector<ColorRGB>> eyeView =
+        world->GetCar()->EyeView(world->GetTrack());
     // State observedState(eyeView.first, eyeView.second);
     Vector2 nextWaypoint = world->GetTrack()->NextWaypoint(world->GetCar()->GetPos());
     Vector2 toNextWaypoint = (nextWaypoint - world->GetCar()->GetPos()).normalised();
 
-    State observedState(world->GetCar()->SonarView(world->GetTrack()),
+    State observedState(eyeView.first, eyeView.second,
+                        world->GetCar()->SonarView(world->GetTrack()),
                         world->GetProgress(),
                         world->GetCar()->RelVelocity(),
                         world->GetCar()->RelHeading(toNextWaypoint));

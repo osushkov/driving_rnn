@@ -17,6 +17,9 @@ class State {
   // vector<ColorRGB> rightEye;
 
 public:
+  vector<ColorRGB> leftEye;
+  vector<ColorRGB> rightEye;
+
   vector<double> sonar;
   float curProgress;
   Vector2 relVelocity;
@@ -24,7 +27,8 @@ public:
 
   State();
   // State(const vector<ColorRGB> &leftEye, const vector<ColorRGB> &rightEye);
-  State(const vector<double> &sonar, float curProgress, const Vector2 &relVelocity,
+  State(const vector<ColorRGB> &leftEye, const vector<ColorRGB> &rightEye,
+        const vector<double> &sonar, float curProgress, const Vector2 &relVelocity,
         double forwardAngle);
 
   bool operator==(const State &other) const;

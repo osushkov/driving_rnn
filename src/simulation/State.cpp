@@ -14,33 +14,37 @@ State::State() {}
 //   assert(leftEye.size() == rightEye.size());
 // }
 
-State::State(const vector<double> &sonar, float curProgress, const Vector2 &relVelocity,
+State::State(const vector<ColorRGB> &leftEye, const vector<ColorRGB> &rightEye,
+             const vector<double> &sonar, float curProgress, const Vector2 &relVelocity,
              double forwardAngle)
-    : sonar(sonar), curProgress(curProgress), relVelocity(relVelocity), forwardAngle(forwardAngle) {}
+    : leftEye(leftEye), rightEye(rightEye), sonar(sonar), curProgress(curProgress),
+      relVelocity(relVelocity), forwardAngle(forwardAngle) {
+  assert(leftEye.size() == rightEye.size());
+}
 
 bool State::operator==(const State &other) const {
-  // if (leftEye.size() != other.leftEye.size()) {
-  //   return false;
-  // }
-  // if (rightEye.size() != other.rightEye.size()) {
-  //   return false;
-  // }
-  //
-  // for (unsigned i = 0; i < leftEye.size(); i++) {
-  //   if (fabsf(leftEye[i].r - other.leftEye[i].r) > 0.0001f ||
-  //       fabsf(leftEye[i].g - other.leftEye[i].g) > 0.0001f ||
-  //       fabsf(leftEye[i].b - other.leftEye[i].b) > 0.0001f) {
-  //     return false;
-  //   }
-  // }
-  //
-  // for (unsigned i = 0; i < rightEye.size(); i++) {
-  //   if (fabsf(rightEye[i].r - other.rightEye[i].r) > 0.0001f ||
-  //       fabsf(rightEye[i].g - other.rightEye[i].g) > 0.0001f ||
-  //       fabsf(rightEye[i].b - other.rightEye[i].b) > 0.0001f) {
-  //     return false;
-  //   }
-  // }
+  if (leftEye.size() != other.leftEye.size()) {
+    return false;
+  }
+  if (rightEye.size() != other.rightEye.size()) {
+    return false;
+  }
+
+  for (unsigned i = 0; i < leftEye.size(); i++) {
+    if (fabsf(leftEye[i].r - other.leftEye[i].r) > 0.0001f ||
+        fabsf(leftEye[i].g - other.leftEye[i].g) > 0.0001f ||
+        fabsf(leftEye[i].b - other.leftEye[i].b) > 0.0001f) {
+      return false;
+    }
+  }
+
+  for (unsigned i = 0; i < rightEye.size(); i++) {
+    if (fabsf(rightEye[i].r - other.rightEye[i].r) > 0.0001f ||
+        fabsf(rightEye[i].g - other.rightEye[i].g) > 0.0001f ||
+        fabsf(rightEye[i].b - other.rightEye[i].b) > 0.0001f) {
+      return false;
+    }
+  }
 
   if (fabsf(curProgress - other.curProgress) > 0.0001f || sonar.size() != other.sonar.size() ||
       relVelocity.distanceTo(other.relVelocity) > 0.0001f ||
@@ -66,30 +70,30 @@ vector<unsigned> State::AvailableActions(void) const {
 }
 
 EVector State::Encode(void) const {
-  // EVector result(leftEye.size() * 3 + rightEye.size() * 3);
-  //
-  // unsigned vi = 0;
-  // for (const auto &c : leftEye) {
-  //   result(vi++) = c.r;
-  //   result(vi++) = c.g;
-  //   result(vi++) = c.b;
-  // }
-  //
-  // for (const auto &c : rightEye) {
-  //   result(vi++) = c.r;
-  //   result(vi++) = c.g;
-  //   result(vi++) = c.b;
-  // }
-  //
-  // assert(vi == result.rows());
-  EVector result(sonar.size() + 1);
-  // result(0) = curProgress;
-  // result(1) = relVelocity.x;
-  // result(2) = relVelocity.y;
+  EVector result(leftEye.size() * 3 * 2 + 1);
   result(0) = fabsf(forwardAngle) > (static_cast<float>(M_PI) / 2.0f) ? -1.0f : 1.0f;
-  for (unsigned i = 0; i < sonar.size(); i++) {
-    result(i + 1) = sonar[i];
+
+  unsigned vi = 1;
+  for (const auto &c : leftEye) {
+    result(vi++) = c.r;
+    result(vi++) = c.g;
+    result(vi++) = c.b;
   }
+
+  for (const auto &c : rightEye) {
+    result(vi++) = c.r;
+    result(vi++) = c.g;
+    result(vi++) = c.b;
+  }
+
+  // EVector result(sonar.size() + 1);
+  // // result(0) = curProgress;
+  // // result(1) = relVelocity.x;
+  // // result(2) = relVelocity.y;
+  // result(0) = fabsf(forwardAngle) > (static_cast<float>(M_PI) / 2.0f) ? -1.0f : 1.0f;
+  // for (unsigned i = 0; i < sonar.size(); i++) {
+  //   result(i + 1) = sonar[i];
+  // }
   return result;
 }
 

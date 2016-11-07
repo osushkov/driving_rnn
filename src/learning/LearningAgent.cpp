@@ -30,7 +30,7 @@ struct LearningAgent::LearningAgentImpl {
 
     spec.numInputs = inputDim;
     spec.numOutputs = Action::NUM_ACTIONS();
-    spec.hiddenActivation = rnn::LayerActivation::TANH;
+    spec.hiddenActivation = rnn::LayerActivation::ELU;
     spec.outputActivation = rnn::LayerActivation::LINEAR;
     spec.nodeActivationRate = 1.0f;
     spec.maxBatchSize = EXPERIENCE_BATCH_SIZE;
@@ -47,7 +47,7 @@ struct LearningAgent::LearningAgentImpl {
     // spec.connections.emplace_back(1, 1, 1);
 
     // Layer defs
-    spec.layers.emplace_back(1, 64, false);
+    spec.layers.emplace_back(1, 256, false);
     spec.layers.emplace_back(2, 128, false);
     // spec.layers.emplace_back(3, 32, false);
     spec.layers.emplace_back(3, spec.numOutputs, true);

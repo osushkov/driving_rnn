@@ -37,14 +37,15 @@ struct ExperienceGenerator::ExperienceGeneratorImpl {
         track, CarDef(CAR_SIZE, CAR_EYE_SEPARATION, CAR_TURN_RATE, CAR_ACCEL_RATE));
 
     for (unsigned i = 0; i < MAX_TRACE_LENGTH; i++) {
-      // pair<vector<ColorRGB>, vector<ColorRGB>> eyeView =
-      //     world->GetCar()->EyeView(world->GetTrack());
+      pair<vector<ColorRGB>, vector<ColorRGB>> eyeView =
+          world->GetCar()->EyeView(world->GetTrack());
       // State observedState(eyeView.first, eyeView.second);
 
       Vector2 nextWaypoint = world->GetTrack()->NextWaypoint(world->GetCar()->GetPos());
       Vector2 toNextWaypoint = (nextWaypoint - world->GetCar()->GetPos()).normalised();
 
-      State observedState(world->GetCar()->SonarView(world->GetTrack()),
+      State observedState(eyeView.first, eyeView.second,
+                          world->GetCar()->SonarView(world->GetTrack()),
                           world->GetProgress(),
                           world->GetCar()->RelVelocity(),
                           world->GetCar()->RelHeading(toNextWaypoint));

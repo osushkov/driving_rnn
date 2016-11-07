@@ -151,22 +151,22 @@ struct Track::TrackImpl {
 
   void generateWallsPalette(const TrackSpec &spec) {
     const float minChannelVal = 0.2f;
-    leftWallPalette.emplace_back(ColorRGB(1.0f, 0.0f, 0.0f));
-    leftWallPalette.emplace_back(ColorRGB(0.0f, 1.0f, 0.0f));
-    leftWallPalette.emplace_back(ColorRGB(1.0f, 1.0f, 1.0f));
+    // leftWallPalette.emplace_back(ColorRGB(1.0f, 0.0f, 0.0f));
+    // leftWallPalette.emplace_back(ColorRGB(0.0f, 1.0f, 0.0f));
+    // leftWallPalette.emplace_back(ColorRGB(1.0f, 1.0f, 1.0f));
+    //
+    // rightWallPalette.emplace_back(ColorRGB(0.0f, 0.0f, 1.0f));
+    // rightWallPalette.emplace_back(ColorRGB(1.0f, 1.0f, 0.0f));
+    // rightWallPalette.emplace_back(ColorRGB(1.0f, 0.0f, 0.0f));
 
-    rightWallPalette.emplace_back(ColorRGB(0.0f, 0.0f, 1.0f));
-    rightWallPalette.emplace_back(ColorRGB(1.0f, 1.0f, 0.0f));
-    rightWallPalette.emplace_back(ColorRGB(1.0f, 0.0f, 0.0f));
-
-    // for (unsigned i = 0; i < spec.colorPaletteSize; i++) {
-    //   leftWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
-    //                                math::RandInterval(minChannelVal, 1.0f),
-    //                                math::RandInterval(minChannelVal, 1.0f));
-    //   rightWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
-    //                                 math::RandInterval(minChannelVal, 1.0f),
-    //                                 math::RandInterval(minChannelVal, 1.0f));
-    // }
+    for (unsigned i = 0; i < spec.colorPaletteSize; i++) {
+      leftWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
+                                   math::RandInterval(minChannelVal, 1.0f),
+                                   math::RandInterval(minChannelVal, 1.0f));
+      rightWallPalette.emplace_back(math::RandInterval(minChannelVal, 1.0f),
+                                    math::RandInterval(minChannelVal, 1.0f),
+                                    math::RandInterval(minChannelVal, 1.0f));
+    }
   }
 
   bool generateTrackLine(const TrackSpec &spec) {
