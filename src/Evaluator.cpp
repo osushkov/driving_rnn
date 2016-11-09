@@ -11,7 +11,7 @@ using namespace learning;
 using namespace simulation;
 
 static constexpr unsigned NUM_EPISODES = 10;
-static constexpr unsigned EPISODE_LENGTH = 500;
+static constexpr unsigned EPISODE_LENGTH = 100;
 
 static vector<sptr<Track>> generateTestTracks(unsigned num) {
   vector<sptr<Track>> result;
@@ -40,8 +40,7 @@ float Evaluator::Evaluate(Agent *agent) {
       Vector2 toNextWaypoint = (nextWaypoint - world->GetCar()->GetPos()).normalised();
 
       State observedState(eyeView.first, eyeView.second,
-                          world->GetCar()->SonarView(world->GetTrack()),
-                          world->GetProgress(),
+                          world->GetCar()->SonarView(world->GetTrack()), world->GetProgress(),
                           world->GetCar()->RelVelocity(),
                           world->GetCar()->RelHeading(toNextWaypoint));
       Action performedAction = agent->SelectAction(&observedState);

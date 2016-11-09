@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
   cout << "learning agent start: " << Evaluator::Evaluate(learningAgent.get()) << endl;
 
   learning::Trainer trainer;
-  trainer.TrainAgent(learningAgent.get(), 500000);
+  trainer.TrainAgent(learningAgent.get(), 50000);
 
   cout << "learning agent end: " << Evaluator::Evaluate(learningAgent.get()) << endl;
 

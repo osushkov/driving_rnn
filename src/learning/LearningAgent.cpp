@@ -40,16 +40,14 @@ struct LearningAgent::LearningAgentImpl {
     spec.connections.emplace_back(0, 1, 0);
     spec.connections.emplace_back(1, 2, 0);
     spec.connections.emplace_back(2, 3, 0);
-    // spec.connections.emplace_back(3, 4, 0);
 
     // Recurrent connections
     spec.connections.emplace_back(2, 2, 1);
     // spec.connections.emplace_back(1, 1, 1);
 
     // Layer defs
-    spec.layers.emplace_back(1, 128, false);
+    spec.layers.emplace_back(1, 64, false);
     spec.layers.emplace_back(2, 128, false);
-    // spec.layers.emplace_back(3, 32, false);
     spec.layers.emplace_back(3, spec.numOutputs, true);
 
     network = make_unique<rnn::RNN>(spec);

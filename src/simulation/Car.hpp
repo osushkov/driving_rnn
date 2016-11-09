@@ -31,7 +31,7 @@ public:
 
   void SetAcceleration(float amount);
   void SetTurn(float amount);
-  void Update(float seconds, Track *track);
+  bool Update(float seconds, Track *track);
 
   Vector2 GetPos(void) const;
   float MaxSpeed(void) const;

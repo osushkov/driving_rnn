@@ -11,15 +11,15 @@ static std::vector<Action> actionSet;
 static void initialiseActions(void) {
   actionSet.emplace_back(0.0f, 0.0f);  // do nothing action
   actionSet.emplace_back(0.0f, 1.0f);  // full ahead
-  actionSet.emplace_back(0.0f, -1.0f); // full reverse
+  actionSet.emplace_back(0.0f, -0.5f); // full reverse
 
   actionSet.emplace_back(1.0f, 0.0f); // full turn left
   actionSet.emplace_back(1.0f, 1.0f);
-  actionSet.emplace_back(1.0f, -1.0f);
+  actionSet.emplace_back(1.0f, -0.5f);
 
   actionSet.emplace_back(-1.0f, 0.0f); // full turn right
   actionSet.emplace_back(-1.0f, 1.0f);
-  actionSet.emplace_back(-1.0f, -1.0f);
+  actionSet.emplace_back(-1.0f, -0.5f);
 }
 
 unsigned Action::NUM_ACTIONS(void) {

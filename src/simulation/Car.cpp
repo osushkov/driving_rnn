@@ -44,14 +44,14 @@ struct Car::CarImpl {
   void Render(renderer::Renderer *renderer) const {
     // Draw the eye rays.
     float fade = 0.2f;
-    for (const auto &ler : leftEyeRays.second) {
-      renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
-                         make_pair(ler.pos, ler.color * fade));
-    }
-    for (const auto &rer : rightEyeRays.second) {
-      renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
-                         make_pair(rer.pos, rer.color * fade));
-    }
+    // for (const auto &ler : leftEyeRays.second) {
+    //   renderer->DrawLine(make_pair(leftEyeRays.first, ler.color * fade),
+    //                      make_pair(ler.pos, ler.color * fade));
+    // }
+    // for (const auto &rer : rightEyeRays.second) {
+    //   renderer->DrawLine(make_pair(rightEyeRays.first, rer.color * fade),
+    //                      make_pair(rer.pos, rer.color * fade));
+    // }
     // for (const auto &sr : sonarRays.second) {
     //   renderer->DrawLine(make_pair(sonarRays.first, ColorRGB::White()),
     //                      make_pair(sr.pos, ColorRGB::White()));
@@ -87,7 +87,7 @@ struct Car::CarImpl {
 
   void SetTurn(float amount) { turnFrac = amount; }
 
-  void Update(float seconds, Track *track) {
+  bool Update(float seconds, Track *track) {
     forward.rotate(seconds * turnFrac * def.turnRate);
     left = forward.rotated(static_cast<float>(M_PI) / 2.0f);
 
@@ -97,7 +97,7 @@ struct Car::CarImpl {
     Vector2 prevPos = pos;
     pos += velocity * seconds;
 
-    checkCollisions(seconds, track, prevPos);
+    return checkCollisions(seconds, track, prevPos);
 
     // sonarRays.first = pos;
     // sonarRays.second.clear();
@@ -121,12 +121,13 @@ struct Car::CarImpl {
     return atan2f(corrected.y, corrected.x);
   }
 
-  void checkCollisions(float seconds, Track *track, const Vector2 &prevPos) {
+  bool checkCollisions(float seconds, Track *track, const Vector2 &prevPos) {
     bool haveCollision = checkCollisionsRayMethod(seconds, track, prevPos);
     haveCollision |= checkCollisionsDisplacementMethod(seconds, track);
     if (haveCollision) {
       velocity *= CAR_VELOCITY_COLLISION_DECAY;
     }
+    return haveCollision;
   }
 
   bool checkCollisionsRayMethod(float seconds, Track *track, const Vector2 &prevPos) {
@@ -255,7 +256,7 @@ struct Car::CarImpl {
     result.reserve(samples.size());
 
     for (const auto &s : samples) {
-      result.push_back(std::min(10.0f, s.pos.distanceTo(pos)) / 10.0f);
+      result.push_back(std::min(20.0f, s.pos.distanceTo(pos)) / 20.0f);
     }
 
     return result;
@@ -306,7 +307,7 @@ void Car::SetAcceleration(float amount) { impl->SetAcceleration(amount); }
 
 void Car::SetTurn(float amount) { impl->SetTurn(amount); }
 
-void Car::Update(float seconds, Track *track) { impl->Update(seconds, track); }
+bool Car::Update(float seconds, Track *track) { return impl->Update(seconds, track); }
 
 Vector2 Car::GetPos(void) const { return impl->pos; }
 

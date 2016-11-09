@@ -22,21 +22,23 @@ struct World::WorldImpl {
     car->Render(renderer);
 
     // Render the pixels seen by each eye in the HUD.
-    pair<vector<ColorRGB>, vector<ColorRGB>> eyeView = car->EyeView(track.get());
-    float pixelBarSize = 0.6f;
-    float pixelSize = pixelBarSize / static_cast<float>(eyeView.first.size());
-    for (unsigned i = 0; i < eyeView.first.size(); i++) {
-      renderer->DrawHUDCircle(Vector2(-0.75f + i * pixelSize, -0.9f), pixelSize / 2.0f,
-                              eyeView.first[i]);
-    }
-    for (unsigned i = 0; i < eyeView.second.size(); i++) {
-      renderer->DrawHUDCircle(Vector2(0.75f + -pixelBarSize + i * pixelSize, -0.9f),
-                              pixelSize / 2.0f, eyeView.second[i]);
-    }
+    // pair<vector<ColorRGB>, vector<ColorRGB>> eyeView = car->EyeView(track.get());
+    // float pixelBarSize = 0.6f;
+    // float pixelSize = pixelBarSize / static_cast<float>(eyeView.first.size());
+    // for (unsigned i = 0; i < eyeView.first.size(); i++) {
+    //   renderer->DrawHUDCircle(Vector2(-0.75f + i * pixelSize, -0.9f), pixelSize / 2.0f,
+    //                           eyeView.first[i]);
+    // }
+    // for (unsigned i = 0; i < eyeView.second.size(); i++) {
+    //   renderer->DrawHUDCircle(Vector2(0.75f + -pixelBarSize + i * pixelSize, -0.9f),
+    //                           pixelSize / 2.0f, eyeView.second[i]);
+    // }
   }
 
   float Update(float seconds) {
-    car->Update(seconds, track.get());
+    bool collision = car->Update(seconds, track.get());
+    float collisionPenalty = 0.0f; // collision ? -0.1f : 0.0f;
+
     prevProgress = curProgress;
     curProgress = track->DistanceAlongTrack(car->GetPos());
 
@@ -44,12 +46,14 @@ struct World::WorldImpl {
 
     if (fabsf(curProgress - prevProgress) > track->TrackLength() / 2.0f) {
       if (curProgress < prevProgress) {
-        return (curProgress - prevProgress + track->TrackLength()) * progressScale;
+        return (curProgress - prevProgress + track->TrackLength()) * progressScale +
+               collisionPenalty;
       } else {
-        return (curProgress - prevProgress - track->TrackLength()) * progressScale;
+        return (curProgress - prevProgress - track->TrackLength()) * progressScale +
+               collisionPenalty;
       }
     } else {
-      return (curProgress - prevProgress) * progressScale;
+      return (curProgress - prevProgress) * progressScale + collisionPenalty;
     }
   }
 };

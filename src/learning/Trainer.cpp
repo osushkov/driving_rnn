@@ -1,5 +1,6 @@
 
 #include "Trainer.hpp"
+#include "../Evaluator.hpp"
 #include "../common/Common.hpp"
 #include "../common/Timer.hpp"
 #include "../simulation/Action.hpp"
@@ -56,6 +57,7 @@ struct Trainer::TrainerImpl {
       float tempDecay = powf(TARGET_TEMPERATURE / INITIAL_TEMPERATURE, 1.0f / iters);
       assert(tempDecay > 0.0f && tempDecay <= 1.0f);
 
+      unsigned nextEvalIters = 0;
       while (true) {
         unsigned doneIters = numLearnIters.load();
         if (doneIters >= iters) {
@@ -69,6 +71,11 @@ struct Trainer::TrainerImpl {
         agent->SetTemperature(temp);
 
         memory->AddExperience(generator->GenerateExperience(agent));
+
+        if (doneIters > nextEvalIters) {
+          cout << nextEvalIters << "\t" << Evaluator::Evaluate(agent) << endl;
+          nextEvalIters += iters / 20;
+        }
         // cout << "experiences generated: " << memory->NumMemories() << endl;
       }
     });
@@ -94,6 +101,7 @@ struct Trainer::TrainerImpl {
         if (it % 1000 == 0) {
           cout << "learn: " << ((100 * it) / iters) << "%" << endl;
         }
+
         this->numLearnIters++;
         // it++;
         // }
